@@ -1,0 +1,22 @@
+{
+    "name": "goose-bot",
+    "version": "1.0.0",
+    "description": "A Discord bot created using Node.js to manage the UW SYDE 25' Discord Server",
+    "main": "bot.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+      "discord.js": "^12.2.0"
+    },
+    "author": "Shivam Sharma",
+    "license": "MIT",
+    "repository": {
+        "url": "https://github.com/shivam-sh/goose-bot"
+    },
+    "keywords": [
+        "node",
+        "discord.js"
+    ]
+  }
+  
