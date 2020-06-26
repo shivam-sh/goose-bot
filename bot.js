@@ -2,19 +2,16 @@
 const keep_alive = require('./keep_alive.js')
 
 // Functions for data storage & managing profiles
-const people = require("./people.js");
+const people = require("./people.js")
 
-// Helps parse .json from webserver
-const fetch = require('node-fetch');
+// The Discord Bot itself
+const Discord = require('discord.js')
+const bot = new Discord.Client()
 
-// Discord Bot
-const Discord = require('discord.js');
-const bot = new Discord.Client();
-
-let prefix = "~";
+let prefix = "~"
 
 bot.on("ready", async () => {
-  console.log(`[LOGIN] ${bot.user.tag} is online!`);
+  console.log(`\n\n[LOGIN] ${bot.user.tag} is online!\n\n`)
 });
 
 bot.on('disconnect', (event) => {
@@ -26,64 +23,106 @@ bot.on('reconnecting', () => {
     console.log(`[NOTICE] ReconnectAction: Reconnecting to Discord...`)
 })
 
+
+
 bot.on("message", async msg => {
-  if (msg.author.bot) return;
+  if (msg.author.bot) return
   
   if(msg.content.substring(0,1) == prefix) {
-    let msgArray = msg.content.split(" ");
-    let cmd = msgArray[0];
-    let args = msgArray.slice(1);
+    let msgArray = msg.content.split(" ")
+    let cmd = msgArray[0]
+    let args = msgArray.slice(1)
 
+
+    // Handle various commands
     switch(cmd) {
+      // Simple greeting
       case `${prefix}hello`:
-        msg.reply(" Hello!");
-        break;
+        msg.channel.send(" Hello!")
+        break
 
-      case '${prefix}verify`':
-        // check if arg[1] is valid userID
-          // if it is generate a verification token and store it in the database along with person's info
-          // email the person their userID if in SYDE
-        break;
+      case `${prefix}init`:
+        people.initDatabase(msg.guild.id)
+        break
 
-      case `${prefix}addUser`:
+      // Verify new users through e-mail
+      case `${prefix}verify`:
+        console.log(`[VERIFY] for: ${args[0]}`)
         if (args.length != 1) {
-          msg.reply(" Invalid syntax, try ~addUser [userID]");
+          msg.channel.send(`Invalid syntax, try ${prefix}verify [userID]`)
+          console.log(`[VERIFY] Invalid Syntax, Try Again!`)
+          break
+        }
+        if (people.isLogged(args[0], msg.guild.id)) {
+          msg.channel.send("That person is already in the database! If you think this is an error please use @Admin")
+          console.log(`[VERIFY] Already Logged!`)
+          break
         }
 
-        var url = 'https://api.uwaterloo.ca/v2/directory/' + args[0] + '.json?key=' + process.env.API_KEY_V2
-        let settings = { method: "Get" };
+        var response = people.addPerson(args[0], msg.guild.id)
 
-        fetch(url, settings)
-            .then(res => res.json())
-            .then((json) => {
-                console.log(json);
-                console.log(json.meta.message);
-                if(json.meta.message == 'Request successful') {
-                  people.addPerson(json.data.user_id, json.data.given_name, json.data.last_name, json.data.department)
-                }
-            });
-        break;
+        switch(response) {
+          case 2:
+            msg.channel.send(`Uh Oh... Something went wrong! \nContacting <@&694339748528914472>...`)
+            console.log(`[VERIFY -> ERROR] while adding to database :(`)
+            break
+          case 1:
+            msg.channel.send(`Doesn't look like you're in UWs database! This may be due to an invalid UserID, try again. \nIf you think this is a mistake use @Admin!`)
+            console.log(`[VERIFY] Invalid UserID: Try Again!`)
+            break
+          case 0:
+            msg.channel.send(`Great! I added you to my database`)
+            break
+          default:
+            console.log(response)
+            break
+        }
+       
+          // email the person their userID if in SYDE
+        break
 
-        case '${prefix}confirm':
+      case `${prefix}addUser`:
+        if (!msg.member.hasPermission('ADMINISTRATOR')) {
+          msg.reply(`You need Admin privileges to use that command!`)
+          break
+        }
+        
+        if (args.length != 1) {
+          msg.channel.send(`Invalid syntax, try ${prefix}addUser [userID]`)
+          break
+        }
+
+        if (people.isLogged[args[1]]) {
+          msg.channel.send("That person is already in the database! No use in adding them again. If you think this is an error please contact @Admin")
+          break
+        }
+
+        break
+
+      case `${prefix}confirm`:
         //people.addPerson(userID, firstName, lastName, department);
         // check person's userID against their token
           // if valid it gives them the verified role
           // if person is syde it goves them the correct role
-        break;
+        break
       
       case `${prefix}logData`:
-        people.logData();
-        break;
+        people.logData()
+        break
 
       case `${prefix}ping`:
-        msg.reply(" Pong!");
-        break;
+        msg.reply(" Pong!")
+        break
+
+      case `${prefix}help`:
+        msg.channel.send(" Still working on that! Check in later :)")
+        break
         
       default:
-        msg.reply(" Invalid :(");
-        break;
+        msg.channel.send("Sorry, I don't know that command yet :(")
+        break
     }
   }
-});
+})
 
-bot.login(process.env.TOKEN);
+bot.login(process.env.TOKEN)
