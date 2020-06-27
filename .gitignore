@@ -106,3 +106,4 @@ dist
 # Project specific
 package-lock.json
 .data/
+presets.json
