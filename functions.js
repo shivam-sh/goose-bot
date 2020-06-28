@@ -22,6 +22,9 @@ const mailAccount = nodemailer.createTransport({
 // File saving/loading
 const fs = require(`fs`);
 
+// Discord for message handling
+const Discord = require("discord.js");
+
 var rawData;
 var people;
 var stats;
@@ -140,7 +143,30 @@ module.exports = {
       }
     }
   },
-  
+
+  lookupPerson: function (msg, args) {
+    let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${vars.UWApiKey}`;
+
+    fetch(url, { method: "Get" })
+      .then((res) => res.json())
+      .then((json, reject) => {
+        if (json.meta.message == 'Request successful') {
+          let lookup = new Discord.MessageEmbed()
+            .setColor('#ffffff')
+            .setTitle('User Info: ' + args[0])
+            .addField('Full Name:', json.data.full_name, true)
+            .addField('Common Names:', json.data.common_names, true)
+            .addField('Department:', json.data.department, true)
+            .addField('Emails:', json.data.email_addresses, true)
+            .setFooter('Goose Bot - Info parsed from UW LDAP')
+          msg.channel.send("embed");    
+          msg.channel.send(lookup);          
+        } else {
+          msg.channel.send(`Request failed :( \n Double check the user id you entered`);
+        }
+      })
+  },
+
   loadData: function (guildID) {
     try {
       rawData = fs.readFileSync(`.data/people-${guildID}.json`);

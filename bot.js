@@ -35,7 +35,6 @@ bot.on("message", async (msg) => {
     let cmd = msgArray[0];
     let args = msgArray.slice(1);
 
-
     switch (cmd) {
       // Verify new users through e-mail
       case `${vars.prefix}verify`:
@@ -45,9 +44,9 @@ bot.on("message", async (msg) => {
         }
         if (functions.isLogged(args[0], msg.guild.id)) {
           msg.channel.send(
-            `That person is already in the database!` + 
-            `Confirm your identity by entering the token sent to your email with \`~confirm [USERID] [TOKEN]\`` +
-            `\nIf you think this is an error please use @Admin`
+            `That person is already in the database!` +
+              `Confirm your identity by entering the token sent to your email with \`~confirm [USERID] [TOKEN]\`` +
+              `\nIf you think this is an error please use @Admin`
           );
           break;
         }
@@ -59,18 +58,20 @@ bot.on("message", async (msg) => {
       // Confirm the user's identity with their token
       case `${vars.prefix}confirm`:
         if (args.length != 2) {
-          msg.channel.send(`Invalid syntax, try ${vars.prefix}confirm [userID] [TOKEN]`);
+          msg.channel.send(
+            `Invalid syntax, try ${vars.prefix}confirm [userID] [TOKEN]`
+          );
           break;
         }
         if (!functions.isLogged(args[0], msg.guild.id)) {
           msg.channel.send(
             `That person isn't in my database!` +
-            `\nRun \`~verify [USERID]\` first, or double check the UserID`
+              `\nRun \`~verify [USERID]\` first, or double check the UserID`
           );
           break;
         }
-        
-        functions.confirm(msg, args)
+
+        functions.confirm(msg, args);
         break;
 
       // Manually verify a user
@@ -95,8 +96,20 @@ bot.on("message", async (msg) => {
         break;
 
       // Log people
-      case `${vars.prefix}logData`:
-        functions.logData(msg.guild.id);
+      case `${vars.prefix}lookupPerson`:
+        if (!msg.member.hasPermission("ADMINISTRATOR")) {
+          msg.reply(`You need Admin privileges to use that command!`);
+          break;
+        }
+        if (args.length != 1) {
+          msg.channel.send(
+            `Invalid syntax, try ${vars.prefix}lookupPerson [userID]`
+          );
+          break;
+        }
+
+        functions.lookupPerson(msg, args);
+
         break;
 
       // Random Commands
