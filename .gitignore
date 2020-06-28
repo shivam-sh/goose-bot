@@ -107,3 +107,4 @@ dist
 package-lock.json
 .data/
 presets.json
+setup.json
