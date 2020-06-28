@@ -39,17 +39,16 @@ bot.on("message", async (msg) => {
     switch (cmd) {
       // Verify new users through e-mail
       case `${vars.prefix}verify`:
-        console.log(`[VERIFY] for: ${args[0]}`);
         if (args.length != 1) {
           msg.channel.send(`Invalid syntax, try ${vars.prefix}verify [userID]`);
-          console.log(`[\\VERIFY] Invalid Usage, Try Again!`);
           break;
         }
         if (functions.isLogged(args[0], msg.guild.id)) {
           msg.channel.send(
-            "That person is already in the database! If you think this is an error please use @Admin"
+            `That person is already in the database!` + 
+            `Confirm your identity by entering the token sent to your email with \`~confirm [USERID] [TOKEN]\`` +
+            `\nIf you think this is an error please use @Admin`
           );
-          console.log(`[\\VERIFY] Already Logged!`);
           break;
         }
         console.log(`[>VERIFY] Checks Passed!`);
@@ -59,15 +58,19 @@ bot.on("message", async (msg) => {
 
       // Confirm the user's identity with their token
       case `${vars.prefix}confirm`:
-        if (args.length != 1) {
-          msg.channel.send(`Invalid syntax, try ${vars.prefix}confirm [userID]`);
+        if (args.length != 2) {
+          msg.channel.send(`Invalid syntax, try ${vars.prefix}confirm [userID] [TOKEN]`);
+          break;
+        }
+        if (!functions.isLogged(args[0], msg.guild.id)) {
+          msg.channel.send(
+            `That person isn't in my database!` +
+            `\nRun \`~verify [USERID]\` first, or double check the UserID`
+          );
           break;
         }
         
-        //functions.addPerson(userID, firstName, lastName, department);
-        // check person's userID against their token
-        // if valid it gives them the verified role
-        // if person is syde it gives them the correct role
+        functions.confirm(msg, args)
         break;
 
       // Manually verify a user
