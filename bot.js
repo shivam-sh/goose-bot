@@ -5,10 +5,23 @@ const keep_alive = require('./keep_alive.js')
 const people = require('./people.js')
 
 // Preset variables
-const preset =require('./presets.json')
+const preset = require('./presets.json')
 
-// Email plugin to send verification codes
-const email = require('emailjs')
+// Helps parse .json from webserver
+const fetch = require('node-fetch')
+
+// Email setup to send verification codes
+const nodemailer = require("nodemailer");
+const mailAccount = nodemailer.createTransport({
+  host: preset.host,
+  port: preset.port,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: preset.user, // generated ethereal user
+    pass: process.env.PASSWORD // generated ethereal password
+  },
+});
+
 
 // The Discord Bot itself
 const Discord = require('discord.js')
@@ -28,7 +41,7 @@ bot.on('reconnecting', () => {
 })
 
 
-
+// Handle bot commands from dicsord
 bot.on("message", async msg => {
   if (msg.author.bot) return
   
@@ -38,13 +51,12 @@ bot.on("message", async msg => {
     let args = msgArray.slice(1)
 
 
-    // Handle bot commands
     switch(cmd) {
+
       // Simple greeting
-      case `${prefix}hello`:
+      case `${preset.prefix}hello`:
         msg.channel.send(" Hello!")
         break
-
 
       // Verify new users through e-mail
       case `${preset.prefix}verify`:
@@ -59,24 +71,102 @@ bot.on("message", async msg => {
           console.log(`[\\VERIFY] Already Logged!`)
           break
         }
+        console.log(`[>VERIFY] Checks Passed!`)
 
-        var guild = msg.guild.id
-        var response = people.lookup(args[0])
+        var guildID = msg.guild.id
 
+
+        
+        new Promise(function(resolve) {
+          var url = 'https://api.uwaterloo.ca/v2/directory/' + args[0] + '.json?key=' + process.env.API_KEY_V2
+    
+          try {
+              fetch(url, { method: `Get` })
+              .then(res => res.json())
+              .then((json) => {
+                  console.log(` - requesting JSON for ${args[0]}`)
+                  if(json.meta.message !== 'Request successful' ) {
+          
+                      msg.channel.send (`Doesn't look like you're in UW's database! This may be due to an incorrect UserID, try again. \nIf you think this is a mistake use @Admin!`)
+                  } else {
+                      people.fName = json.data.given_name
+                      people.lName = json.data.last_name
+                      people.dept = json.data.department
+                      people.email = json.data.email_addresses[0]
+                      people.verified = false
+                      people.token = `notGenerated`
+
+                      console.log("pass")
+                      resolve("done")
+                  }
+              })
+          } catch(err) {
+            console.log(err)
+              msg.channel.send (`Error fetching JSON :(`)
+          }
+        })
+          .then(() => {
+
+            people.loadData(guildID)
+            
+            let response = people.addPerson(args[0], guildID)
+            if (response === null) {
+              msg.channel.send(`Great! I added you to my database`)
+                
+              console.log(preset.user)
+              console.log(people.email)
+              console.log(people.token)
+
+                async function sendMail() {
+                  // send mail with defined transport object
+                  let info = await mailAccount.sendMail({
+                    from: `"Goose Bot 👻" <${preset.user}>`, // sender address
+                    to: people.email, // list of receivers
+                    subject: "UW SYDE '25 Verification ✔", // Subject line
+                    text: `TOKEN: ${people.token}`, // plain text body
+                    html: `<b>HONK</b></br>
+                          Hey! Your verification token is: ${people.token}</br>
+                          You can verify yourself by entering \`~verify ${people.token}\`!`, // html body
+                  });
+                }
+                
+                sendMail()
+                people.saveData(guildID)
+            } else {
+              console.log(response)
+            }
+            
+    
+          })
+        
+        /*
+        console.log (response)
         if (response === 0) {
           people.loadData(guild)
 
           response = people.addPerson(args[0], guild)
-
+          console.log (response)
           if (response === 0) {
             msg.channel.send(`Great! I added you to my database`)
-            people.assignToken(args[0], guild)
 
+            let message = new emailjs.Message({
+              text: `I hope this works`,
+              from: `Goose Bot <${preset.user}>`,
+              to: `${people.fName} ${people.lName} <${people.email}>`,
+              subject: `testing emailjs`
+            })
             
-            
-
-
-            people.saveData(guild)
+            client.send(
+              {
+                text: `I hope this works! \nTOKEN:${people.token}`,
+                from: `Goose Bot <${preset.user}>`,
+                to: `${people.fName} ${people.lName} <${people.email}>`,
+                subject: `testing emailjs`
+              },
+              (err, message) => {
+                console.log(err || message)
+              }
+            )
           }
           else if (response === 1) {
             msg.channel.send(`Uh Oh... Something went wrong! \nContacting <@&694339748528914472>...`)
@@ -88,8 +178,7 @@ bot.on("message", async msg => {
           msg.channel.send(`Doesn't look like you're in UWs database! This may be due to an incorrect UserID, try again. \nIf you think this is a mistake use @Admin!`)
           console.log(`[\\VERIFY] Invalid UserID: Try Again!`)
         }
-
-          // email the person their userID if in SYDE
+        */
         break
 
 
