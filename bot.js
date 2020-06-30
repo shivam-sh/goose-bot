@@ -35,17 +35,26 @@ bot.on("message", async (msg) => {
     let cmd = msgArray[0];
     let args = msgArray.slice(1);
 
+    // The various cases for incoming commands
     switch (cmd) {
       // Verify new users through e-mail
       case `${vars.prefix}verify`:
         if (args.length != 1) {
-          msg.channel.send(`Invalid syntax, try ${vars.prefix}verify [UW-USERNAME]`);
+          msg.channel.send(
+            `Invalid syntax, try ${vars.prefix}verify [UW-USERNAME]`
+          );
           break;
         }
         if (functions.isUsernameTaken(args[0], msg)) {
           msg.channel.send(
-            `That user is already verified in the database!` +
+            `That UW Username is already associated with a verified account!` +
               `\nIf you think this is an error please use '@Admin'`
+          );
+          break;
+        }
+        if (functions.alreadyRanVerify(msg, args)) {
+          msg.reply(
+            `I've already sent you a verification code for that username`
           );
           break;
         }
@@ -57,14 +66,12 @@ bot.on("message", async (msg) => {
       // Confirm the user's identity with their token
       case `${vars.prefix}confirm`:
         if (args.length != 1) {
-          msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}confirm [TOKEN]`
-          );
+          msg.channel.send(`Invalid syntax, try ${vars.prefix}confirm [TOKEN]`);
           break;
         }
-        if (!functions.isInDatabase(msg)) {
+        if (!functions.isInDatabase(msg, msg.author.id)) {
           msg.channel.send(
-            `That person isn't in my database!` +
+            `You aren't in my database!` +
               `\nRun \`${vars.prefix}verify [UW-USERNAME]\` first, or double check the Username`
           );
           break;
@@ -79,18 +86,30 @@ bot.on("message", async (msg) => {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
+        if (args.length != 1 || args.length != 2) {
+          msg.channel.send(
+            `Invalid syntax, try ${vars.prefix}forceVerify [UW-USERNAME] [?ROLE]`
+          );
+          break;
+        }
+        
+        functions.forceVerify(msg, args)
+        break;
+
+      // Add a guest to server
+      case `${vars.prefix}addGuest` :
+        if (!msg.member.hasPermission("ADMINISTRATOR")) {
+          msg.reply(`You need Admin privileges to use that command!`);
+          break;
+        }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}forceVerify [UW-USERNAME]`
+            `Invalid syntax, try ${vars.prefix}addGuest [UW-USERNAME]`
           );
           break;
         }
-        if (functions.isInDatabase(msg)) {
-          msg.channel.send(
-            "That person is already in the database! No use in adding them again."
-          );
-          break;
-        }
+
+        functions.addGuest(msg, args)
         break;
 
       // Loookup people
@@ -115,15 +134,15 @@ bot.on("message", async (msg) => {
         break;
 
       case `${vars.prefix}help`:
-        if (args.length == 0 ) {
+        if (args.length == 0) {
           let help = new Discord.MessageEmbed()
-            .setColor('#ffffff')
-            .setTitle('Help')
-            .addField(`${vars.prefix}verify`, '', true)
-            .addField(`${vars.prefix}confirm`, '', true)
-            .addField(`${vars.prefix}honk`, '', true)
-            .addField(`${vars.prefix}help admin`, '', true)
-            .setFooter('Goose Bot - Shivam Sharma')
+            .setColor("#ffffff")
+            .setTitle("Help")
+            .addField(`${vars.prefix}verify`, "", true)
+            .addField(`${vars.prefix}confirm`, "", true)
+            .addField(`${vars.prefix}honk`, "", true)
+            .addField(`${vars.prefix}help admin`, "", true)
+            .setFooter("Goose Bot - Shivam Sharma");
           msg.channel.send(help);
         }
         break;

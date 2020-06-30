@@ -36,23 +36,34 @@ module.exports = {
     console.log(people);
   },
 
-  isInDatabase: function(msg) {
-    let discID = msg.author.id
+  isUsernameTaken: function (userID, msg) {
+    this.loadData(msg.guild.id);
+
+    if (stats.claimed[userID]) {
+      return true;
+    }
+    return false;
+  },
+
+  isInDatabase: function(msg, discID) {
     this.loadData(msg.guild.id)
 
-    if (people[discID] != undefined) {
+    if (people[discID]) {
       return true
     }
     return false
   },
 
-  isUsernameTaken: function (userID, msg) {
-    this.loadData(msg.guild.id);
-
-    if (stats.claimed[userID] !== undefined) {
-      return true;
-    }
-    return false;
+  alreadyRanVerify: function(msg, args) {
+    let discID = msg.author.id
+    let uwID = args[0]
+    
+    try {
+      if (people[discID].uwID == uwID) {
+        return true
+      }
+    } catch{}
+    return false
   },
 
   verify: function (msg, args) {
@@ -75,7 +86,6 @@ module.exports = {
             lName: json.data.last_name,
             uwID: uwID,
             discName: `${msg.author.username}#${msg.author.discriminator}`,
-            discID: discID,
             email: json.data.email_addresses,
             dept: json.data.department,
             verification: null,
@@ -137,36 +147,115 @@ module.exports = {
     let guild = msg.guild.id;
     let discID = msg.author.id;
     let token = args[0];
-    var verified = msg.member.guild.roles.cache.find(
+    let verified = msg.member.guild.roles.cache.find(
       (role) => role.name === "Verified"
     );
     this.loadData(guild);
 
-    if (people[discID].token != token) {
-      msg.channel.send(`Incorrect token for ${people[discID].uwID}`);
-    } else if (people[discID].verification == 'Verified') {
-      msg.channel.send(`You are already verified!`);
+    if (this.isUsernameTaken(people[discID].uwID, msg)) {
+      msg.channel.send(
+        `That UW Username is already associated with a verified account!` +
+          `\nIf you think this is an error please use '@Admin'`
+      );
+      return
+    }
+    if (people[discID].verification == 'Verified') {
+      msg.reply(` you are already verified!`);
+    } else if (people[discID].token != token) {
+      msg.reply(` incorrect token!`);
     } else {
       try {
         msg.member.roles.add(verified);
         people[discID].verification = 'Verified';
-        msg.channel.send(`Verified ${people[discID].uwID}! \nWelcome to the server :)`);
+        msg.reply(`Verified ${people[discID].uwID}! \nWelcome to the server! :)`);
         stats.info.numVerified++;
         stats.claimed[people[discID].uwID] = discID;
         this.saveData(guild);
       } catch {
         console.log(`[ERROR] - Couldn't verify ${people[discID].uwID}`);
+        msg.channel.send(`Couldn't verify ${people[discID].uwID}`)
       }
     }
   },
 
   // Verify a user without the need for a UW username
   forceVerify: function(msg, args) {
+    let guild = msg.guild.id;
+    let member = msg.guild.member(msg.mentions.users.first())
+    let verified = msg.member.guild.roles.cache.find(
+      (role) => role.name === "Verified"
+    );
+    this.loadData(guild);
+
+    try {
+      if (!member) {
+        msg.reply(`Can't find that user in this server :(`)
+      }
+      if (people[discID].verification == 'Verified') {
+        msg.reply(`User is already verified!`);
+        return
+      }
+    } catch{}
+    try {
+      member.roles.add(verified);
+      
+      people[member.id] = {
+        discName: `${msg.author.username}#${msg.author.discriminator}`,
+        verification: "Verified"
+      }
+
+      msg.channel.send(`Verified ${people[member.username]}! \nWelcome to the server :)`);
+      stats.info.numVerified++;
+      this.saveData(guild);
+    } catch(err) {
+      console.log(err)
+      msg.reply(`Couldn't verify ${args[0]}`);
+    }
   },
 
-  // Add guest with limited access to the server
+  // Add guest user with limited access tot hr server
   addGuest: function(msg, args) {
-    let 
+    let guild = msg.guild.id;
+    let member = msg.guild.member(msg.mentions.users.first())
+    let guest = msg.member.guild.roles.cache.find(
+      (role) => role.name === "Guest"
+    );
+    this.loadData(guild);
+
+    try {
+      if (!member) {
+        msg.reply(`Can't find that user in this server :(`)
+      }
+      if (people[member.id].verification == 'Verified') {
+        msg.channel.send(`That user is already verified!`);
+        return
+      } else if (people[member.id].verification == 'Guest') {
+        msg.channel.send(`User is already a guest!`);
+        return
+      }
+    } catch {
+      people[member.id] = {
+        discName: `${member.username}#${member.discriminator}`,
+        verification: null,
+      };
+    }
+
+    try {
+      member.roles.add(guest);
+      people[member.id].verification = 'Guest';
+
+      people[member.id] = {
+        discName: `${member.username}#${member.discriminator}`,
+        verification: "Guest",
+      };
+
+      msg.channel.send(`Added Guest ${people[member.id].username}! \nWelcome to the server :)`);
+      stats.info.numGuests++;
+      this.saveData(guild);
+    } catch(err) {
+      console.log(err);
+      msg.reply(`Couldn't add guest ${args[0]} :(`);
+    }
   },
 
   lookupUser: function (msg, args) {
@@ -204,7 +293,7 @@ module.exports = {
       fs.writeFileSync(`.data/people-${guildID}.json`, `{}`);
       fs.writeFileSync(
         `.data/stats-${guildID}.json`,
-        `{ "info":{"requests": 0, "numVerified": 0, "numInSYDE": 0, "numOutSYDE": 0}, "claimed":{} }`
+        `{ "info":{"requests": 0, "numVerified": 0, "numGuests": 0, "numInSYDE": 0, "numOutSYDE": 0}, "claimed":{} }`
       );
 
       rawData = fs.readFileSync(`.data/people-${guildID}.json`);
