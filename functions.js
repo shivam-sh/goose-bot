@@ -185,6 +185,7 @@ module.exports = {
     let verified = msg.member.guild.roles.cache.find(
       (role) => role.name === "Verified"
     );
+
     this.loadData(guild);
 
     try {
@@ -206,6 +207,23 @@ module.exports = {
 
       msg.channel.send(`Verified ${people[member.username]}! \nWelcome to the server :)`);
       stats.info.numVerified++;
+
+      if (args.length == 2) {
+        try {
+          let role = args[1].replace("-", " ")
+          
+          role = msg.member.guild.roles.cache.find(
+            role => role.name === role
+            )
+
+          if (role) {
+            member.roles.add(role);
+          }
+        } catch {
+          msg.channel.send("Couldn't assign role \"" + role + "\"")
+        }
+      }
+
       this.saveData(guild);
     } catch(err) {
       console.log(err)
@@ -214,7 +232,7 @@ module.exports = {
   },
 
   // Add guest user with limited access tot hr server
-  addGuest: function(msg, args) {
+  addGuest: function(msg, discord) {
     let guild = msg.guild.id;
     let member = msg.guild.member(msg.mentions.users.first())
     let guest = msg.member.guild.roles.cache.find(
@@ -251,10 +269,11 @@ module.exports = {
 
       msg.channel.send(`Added Guest ${people[member.id].username}! \nWelcome to the server :)`);
       stats.info.numGuests++;
+
       this.saveData(guild);
     } catch(err) {
       console.log(err);
-      msg.reply(`Couldn't add guest ${args[0]} :(`);
+      msg.reply(`Couldn't add guest ${discord[0]}! :(`);
     }
   },
 

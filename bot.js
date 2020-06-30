@@ -104,12 +104,12 @@ bot.on("message", async (msg) => {
         }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}addGuest [UW-USERNAME]`
+            `Invalid syntax, try ${vars.prefix}addGuest [@DISCORD]`
           );
           break;
         }
 
-        functions.addGuest(msg, args)
+        functions.addGuest(msg, args[0])
         break;
 
       // Loookup people
