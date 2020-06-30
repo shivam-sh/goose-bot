@@ -36,19 +36,30 @@ module.exports = {
     console.log(people);
   },
 
-  isLogged: function (userID, guildID) {
-    this.loadData(guildID);
+  isInDatabase: function(msg) {
+    let discID = msg.author.id
+    this.loadData(msg.guild.id)
 
-    if (people[userID] != undefined) {
+    if (people[discID] != undefined) {
+      return true
+    }
+    return false
+  },
+
+  isUsernameTaken: function (userID, msg) {
+    this.loadData(msg.guild.id);
+
+    if (stats.claimed[userID] !== undefined) {
       return true;
     }
-
     return false;
   },
 
   verify: function (msg, args) {
     let guild = msg.guild.id;
-    let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${vars.UWApiKey}`;
+    let uwID = args[0]
+    let discID = msg.author.id 
+    let url = `https://api.uwaterloo.ca/v2/directory/${uwID}.json?key=${vars.UWApiKey}`;
 
     fetch(url, { method: "Get" })
       .then((res) => res.json())
@@ -59,32 +70,35 @@ module.exports = {
         } else {
           this.loadData(guild);
 
-          people[args[0]] = {
+          people[discID] = {
             fName: json.data.given_name,
             lName: json.data.last_name,
-            discord: `${msg.author.username}#${msg.author.discriminator}`,
-            dept: json.data.department,
+            uwID: uwID,
+            discName: `${msg.author.username}#${msg.author.discriminator}`,
+            discID: discID,
             email: json.data.email_addresses,
-            verified: false,
+            dept: json.data.department,
+            verification: null,
             token: crypto
               .randomBytes(Math.ceil(10 / 2))
               .toString("hex")
               .slice(0, 10),
           };
 
-          msg.channel.send(`Great! I added ${args[0]} to my database.`);
+          msg.channel.send(`Great! I added ${uwID} to my database.`);
 
-          stats.numPeople++;
+          stats.info.requests++;
           if (json.data.department === `ENG/Systems Design`) {
           } else {
-            throw "You're not in SYDE! An admin can grant you access to the server if you have a valid reason";
+            throw "You're not in SYDE! An admin can give you a guest role if you would like access to the server";
           }
 
-          return people[args[0]];
+          return people[discID];
         }
       })
       .then((user) => {
         try {
+          /*
           mailAccount.sendMail({
             from: `"Goose Bot 👻" <${vars.email}>`, // sender address
             to: user.email[0], // list of receivers
@@ -93,16 +107,18 @@ module.exports = {
             html: `<b>HONK</b></br>
                                 Hey! Your verification token is: ${user.token}</br>
                                 You can verify yourself by entering: </br>
-                                <b>\`~verify ${args[0]} ${user.token}\`</b>!
+                                <b>\`~confirm ${user.token}\`</b>!
                                 </br></br>
                                 Also! If you have time reply to this email with something random to prevent this account from being flagged as spam.`, // html body
           });
+          */
+         msg.channel.send(`Sent email placeholder => ${user.token}`)
         } catch {
           throw "Error sending email! An <@&694339748528914472> will send your verification token to you";
         }
 
         msg.channel.send(
-          `I emailed you a verification token! \nVerify your identity by entering \`~confirm [USERID] [TOKEN]\``
+          `I emailed you a verification token! \nVerify your identity by entering \`~confirm [${user.token}]\``
         );
       })
       .catch((err) => {
@@ -119,32 +135,41 @@ module.exports = {
 
   confirm: function (msg, args) {
     let guild = msg.guild.id;
-    let user = args[0];
-    let token = args[1];
+    let discID = msg.author.id;
+    let token = args[0];
     var verified = msg.member.guild.roles.cache.find(
       (role) => role.name === "Verified"
     );
-
     this.loadData(guild);
 
-    if (people[user].token != token) {
-      msg.channel.send(`Incorrect token for ${user}`);
-    } else if (people[user].verified) {
-      msg.channel.send(`${user} is already verified!`);
+    if (people[discID].token != token) {
+      msg.channel.send(`Incorrect token for ${people[discID].uwID}`);
+    } else if (people[discID].verification == 'Verified') {
+      msg.channel.send(`You are already verified!`);
     } else {
       try {
         msg.member.roles.add(verified);
-        people[user].verified = true;
-        msg.channel.send(`Verified ${user}! \nWelcome to the server :)`);
-
+        people[discID].verification = 'Verified';
+        msg.channel.send(`Verified ${people[discID].uwID}! \nWelcome to the server :)`);
+        stats.info.numVerified++;
+        stats.claimed[people[discID].uwID] = discID;
         this.saveData(guild);
       } catch {
-        console.log(`[ERROR] - Couldn't verify ${user}`);
+        console.log(`[ERROR] - Couldn't verify ${people[discID].uwID}`);
       }
     }
   },
 
-  lookupPerson: function (msg, args) {
+  // Verify a user without the need for a UW username
+  forceVerify: function(msg, args) {
+  },
+
+  // Add guest with limited access to the server
+  addGuest: function(msg, args) {
+    let 
+  },
+
+  lookupUser: function (msg, args) {
     let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${vars.UWApiKey}`;
 
     fetch(url, { method: "Get" })
@@ -159,10 +184,9 @@ module.exports = {
             .addField('Department:', json.data.department, true)
             .addField('Emails:', json.data.email_addresses, true)
             .setFooter('Goose Bot - Info parsed from UW LDAP')
-          msg.channel.send("embed");    
           msg.channel.send(lookup);          
         } else {
-          msg.channel.send(`Request failed :( \n Double check the user id you entered`);
+          msg.channel.send(`Lookup failed :( \n Double check the user id you entered`);
         }
       })
   },
@@ -180,7 +204,7 @@ module.exports = {
       fs.writeFileSync(`.data/people-${guildID}.json`, `{}`);
       fs.writeFileSync(
         `.data/stats-${guildID}.json`,
-        `{"numPeople": 0, "numVerified": 0, "numInSYDE": 0, "numOutSYDE": 0}`
+        `{ "info":{"requests": 0, "numVerified": 0, "numInSYDE": 0, "numOutSYDE": 0}, "claimed":{} }`
       );
 
       rawData = fs.readFileSync(`.data/people-${guildID}.json`);

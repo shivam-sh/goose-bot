@@ -39,14 +39,13 @@ bot.on("message", async (msg) => {
       // Verify new users through e-mail
       case `${vars.prefix}verify`:
         if (args.length != 1) {
-          msg.channel.send(`Invalid syntax, try ${vars.prefix}verify [userID]`);
+          msg.channel.send(`Invalid syntax, try ${vars.prefix}verify [UW-USERNAME]`);
           break;
         }
-        if (functions.isLogged(args[0], msg.guild.id)) {
+        if (functions.isUsernameTaken(args[0], msg)) {
           msg.channel.send(
-            `That person is already in the database!` +
-              `Confirm your identity by entering the token sent to your email with \`~confirm [USERID] [TOKEN]\`` +
-              `\nIf you think this is an error please use @Admin`
+            `That user is already verified in the database!` +
+              `\nIf you think this is an error please use '@Admin'`
           );
           break;
         }
@@ -57,16 +56,16 @@ bot.on("message", async (msg) => {
 
       // Confirm the user's identity with their token
       case `${vars.prefix}confirm`:
-        if (args.length != 2) {
+        if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}confirm [userID] [TOKEN]`
+            `Invalid syntax, try ${vars.prefix}confirm [TOKEN]`
           );
           break;
         }
-        if (!functions.isLogged(args[0], msg.guild.id)) {
+        if (!functions.isInDatabase(msg)) {
           msg.channel.send(
             `That person isn't in my database!` +
-              `\nRun \`~verify [USERID]\` first, or double check the UserID`
+              `\nRun \`${vars.prefix}verify [UW-USERNAME]\` first, or double check the Username`
           );
           break;
         }
@@ -75,41 +74,39 @@ bot.on("message", async (msg) => {
         break;
 
       // Manually verify a user
-      case `${vars.prefix}verifyUser`:
+      case `${vars.prefix}forceVerify`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}addUser [userID]`
+            `Invalid syntax, try ${vars.prefix}forceVerify [UW-USERNAME]`
           );
           break;
         }
-        if (functions.isLogged[args[1]]) {
+        if (functions.isInDatabase(msg)) {
           msg.channel.send(
-            "That person is already in the database! No use in adding them again. If you think this is an error please contact @Admin"
+            "That person is already in the database! No use in adding them again."
           );
           break;
         }
-
         break;
 
-      // Log people
-      case `${vars.prefix}lookupPerson`:
+      // Loookup people
+      case `${vars.prefix}lookupUser`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}lookupPerson [userID]`
+            `Invalid syntax, try ${vars.prefix}lookupPerson [UW-USERNAME]`
           );
           break;
         }
 
-        functions.lookupPerson(msg, args);
-
+        functions.lookupUser(msg, args);
         break;
 
       // Random Commands
@@ -118,7 +115,17 @@ bot.on("message", async (msg) => {
         break;
 
       case `${vars.prefix}help`:
-        msg.channel.send(" Still working on that! Check in later :)");
+        if (args.length == 0 ) {
+          let help = new Discord.MessageEmbed()
+            .setColor('#ffffff')
+            .setTitle('Help')
+            .addField(`${vars.prefix}verify`, '', true)
+            .addField(`${vars.prefix}confirm`, '', true)
+            .addField(`${vars.prefix}honk`, '', true)
+            .addField(`${vars.prefix}help admin`, '', true)
+            .setFooter('Goose Bot - Shivam Sharma')
+          msg.channel.send(help);
+        }
         break;
 
       default:
