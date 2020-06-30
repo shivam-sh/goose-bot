@@ -86,7 +86,7 @@ bot.on("message", async (msg) => {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
-        if (args.length != 1 || args.length != 2) {
+        if (args.length != 1 && args.length != 2) {
           msg.channel.send(
             `Invalid syntax, try ${vars.prefix}forceVerify [UW-USERNAME] [?ROLE]`
           );

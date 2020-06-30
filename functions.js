@@ -99,6 +99,7 @@ module.exports = {
 
           stats.info.requests++;
           if (json.data.department === `ENG/Systems Design`) {
+            stats.info.numInSyde++;
           } else {
             throw "You're not in SYDE! An admin can give you a guest role if you would like access to the server";
           }
@@ -182,7 +183,7 @@ module.exports = {
   forceVerify: function(msg, args) {
     let guild = msg.guild.id;
     let member = msg.guild.member(msg.mentions.users.first())
-    let verified = msg.member.guild.roles.cache.find(
+    let verified = msg.guild.roles.cache.find(
       (role) => role.name === "Verified"
     );
 
@@ -205,17 +206,20 @@ module.exports = {
         verification: "Verified"
       }
 
-      msg.channel.send(`Verified ${people[member.username]}! \nWelcome to the server :)`);
+      msg.channel.send(`Verified ${people[member.id].discName}! \nWelcome to the server :)`);
       stats.info.numVerified++;
 
+      console.log(args.length)
+      console.log(args[1])
       if (args.length == 2) {
         try {
           let role = args[1].replace("-", " ")
-          
-          role = msg.member.guild.roles.cache.find(
-            role => role.name === role
+          console.log(role)
+          role = msg.guild.roles.cache.find(
+            role => role.name == role
             )
 
+          console.log(role)
           if (role) {
             member.roles.add(role);
           }
@@ -253,7 +257,7 @@ module.exports = {
       }
     } catch {
       people[member.id] = {
-        discName: `${member.username}#${member.discriminator}`,
+        discName: `${member.user.username}#${member.user.discriminator}`,
         verification: null,
       };
     }
@@ -263,11 +267,11 @@ module.exports = {
       people[member.id].verification = 'Guest';
 
       people[member.id] = {
-        discName: `${member.username}#${member.discriminator}`,
+        discName: `${member.user.username}#${member.user.discriminator}`,
         verification: "Guest",
       };
 
-      msg.channel.send(`Added Guest ${people[member.id].username}! \nWelcome to the server :)`);
+      msg.channel.send(`Added Guest ${people[member.id].discName}! \nWelcome to the server :)`);
       stats.info.numGuests++;
 
       this.saveData(guild);
@@ -312,7 +316,7 @@ module.exports = {
       fs.writeFileSync(`.data/people-${guildID}.json`, `{}`);
       fs.writeFileSync(
         `.data/stats-${guildID}.json`,
-        `{ "info":{"requests": 0, "numVerified": 0, "numGuests": 0, "numInSYDE": 0, "numOutSYDE": 0}, "claimed":{} }`
+        `{ "info":{"requests": 0, "numVerified": 0, "numGuests": 0, "numInSYDE": 0}, "claimed":{} }`
       );
 
       rawData = fs.readFileSync(`.data/people-${guildID}.json`);
