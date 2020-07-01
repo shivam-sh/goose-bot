@@ -37,6 +37,7 @@ bot.on("message", async (msg) => {
 
     // The various cases for incoming commands
     switch (cmd) {
+
       // Verify new users through e-mail
       case `${vars.prefix}verify`:
         if (args.length != 1) {
@@ -138,10 +139,9 @@ bot.on("message", async (msg) => {
           let help = new Discord.MessageEmbed()
             .setColor("#ffffff")
             .setTitle("Help")
-            .addField(`${vars.prefix}verify`, "", true)
-            .addField(`${vars.prefix}confirm`, "", true)
-            .addField(`${vars.prefix}honk`, "", true)
-            .addField(`${vars.prefix}help admin`, "", true)
+            .addField(`${vars.prefix}verify [UW-USERNAME]`, "Verify your status as a member of the SYDE program for access to the server", true)
+            .addField(`${vars.prefix}confirm [TOKEN]`, "Confirm your student staus with the verification token sent to your student email", true)
+            .addField(`${vars.prefix}honk`, "Umm, just honk", true)
             .setFooter("Goose Bot - Shivam Sharma");
           msg.channel.send(help);
         }
