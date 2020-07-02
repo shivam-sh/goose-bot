@@ -109,7 +109,6 @@ module.exports = {
       })
       .then((user) => {
         try {
-          /*
           mailAccount.sendMail({
             from: `"Goose Bot 👻" <${vars.email}>`, // sender address
             to: user.email[0], // list of receivers
@@ -122,8 +121,7 @@ module.exports = {
                                 </br></br>
                                 Also! If you have time reply to this email with something random to prevent this account from being flagged as spam.`, // html body
           });
-          */
-         msg.channel.send(`Sent email placeholder => ${user.token}`)
+         msg.channel.send(`I'm sending you an email to your UW Outlook account!`)
         } catch {
           throw "Error sending email! An <@&694339748528914472> will send your verification token to you";
         }
