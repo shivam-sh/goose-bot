@@ -1,6 +1,3 @@
-// Preset variables
-const vars = require("./setup.json");
-
 // Token generator
 const crypto = require("crypto");
 
@@ -10,12 +7,12 @@ const fetch = require("node-fetch");
 // Email setup to send verification codes
 const nodemailer = require("nodemailer");
 const mailAccount = nodemailer.createTransport({
-  host: vars.host,
-  port: vars.port,
+  host: process.env.HOST,
+  port: process.env.PORT,
   secure: false, // true for 465, false for other ports
   auth: {
-    user: vars.email, // generated ethereal user
-    pass: vars.emailPass, // generated ethereal password
+    user: process.env.EMAIL, // generated ethereal user
+    pass: process.env.EMAILPASS, // generated ethereal password
   },
 });
 
@@ -70,7 +67,7 @@ module.exports = {
     let guild = msg.guild.id;
     let uwID = args[0]
     let discID = msg.author.id 
-    let url = `https://api.uwaterloo.ca/v2/directory/${uwID}.json?key=${vars.UWApiKey}`;
+    let url = `https://api.uwaterloo.ca/v2/directory/${uwID}.json?key=${process.env.UWAPIKEY}`;
 
     fetch(url, { method: "Get" })
       .then((res) => res.json())
@@ -110,7 +107,7 @@ module.exports = {
       .then((user) => {
         try {
           mailAccount.sendMail({
-            from: `"Goose Bot 👻" <${vars.email}>`, // sender address
+            from: `"Goose Bot 👻" <${process.env.EMAIL}>`, // sender address
             to: user.email[0], // list of receivers
             subject: "UW SYDE '25 Verification ✔", // Subject line
             text: `TOKEN: ${user.token}`, // plain text body
@@ -126,9 +123,7 @@ module.exports = {
           throw "Error sending email! An <@&694339748528914472> will send your verification token to you";
         }
 
-        msg.channel.send(
-          `I emailed you a verification token! \nVerify your identity by entering \`~confirm [${user.token}]\``
-        );
+        msg.channel.send(`I'm sending a token to your UW email!\nGo ahead and enter \'~confirm [TOKEN]\' to finish the process`)
       })
       .catch((err) => {
         msg.channel.send(err);
@@ -200,7 +195,7 @@ module.exports = {
       member.roles.add(verified);
       
       people[member.id] = {
-        discName: `${msg.author.username}#${msg.author.discriminator}`,
+        discName: `${member.user.username}#${member.user.discriminator}`,
         verification: "Verified"
       }
 
@@ -280,7 +275,7 @@ module.exports = {
   },
 
   lookupUser: function (msg, args) {
-    let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${vars.UWApiKey}`;
+    let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${process.env.UWAPIKEY}`;
 
     fetch(url, { method: "Get" })
       .then((res) => res.json())
