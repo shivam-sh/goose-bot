@@ -1,8 +1,8 @@
-// Keep server online (only needer for repl.it hosting)
-const keep_alive = require("./keep_alive.js");
-
 // Functions for data storage & managing profiles
 const functions = require("./functions.js");
+
+// Load Environment Variables
+require('dotenv').config();
 
 // The Discord Bot itself
 const Discord = require("discord.js");
@@ -160,5 +160,6 @@ bot.on("message", async (msg) => {
     }
   }
 });
+
 
 bot.login(process.env.TOKEN);
