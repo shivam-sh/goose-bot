@@ -20,7 +20,7 @@ bot.on("disconnect", (event) => {
 });
 
 bot.on("reconnecting", () => {
-  console.log(`[NOTICE] ReconnectAction: Reconnecting to Discord...`);
+  console.log(`[NOTICE] Reconnect Action: Reconnecting to Discord...`);
 });
 
 // Handle bot commands from Discord
@@ -34,7 +34,6 @@ bot.on("message", async (msg) => {
 
     // The various cases for incoming commands
     switch (cmd) {
-
       // Verify new users through e-mail
       case `${process.env.PREFIX}verify`:
         if (args.length != 1) {
@@ -56,7 +55,6 @@ bot.on("message", async (msg) => {
           );
           break;
         }
-        console.log(`[>VERIFY] Checks Passed!`);
 
         functions.verify(msg, args);
         break;
@@ -64,7 +62,9 @@ bot.on("message", async (msg) => {
       // Confirm the user's identity with their token
       case `${process.env.PREFIX}confirm`:
         if (args.length != 1) {
-          msg.channel.send(`Invalid syntax, try ${process.env.PREFIX}confirm [TOKEN]`);
+          msg.channel.send(
+            `Invalid syntax, try ${process.env.PREFIX}confirm [TOKEN]`
+          );
           break;
         }
         if (!functions.isInDatabase(msg, msg.author.id)) {
@@ -90,12 +90,12 @@ bot.on("message", async (msg) => {
           );
           break;
         }
-        
-        functions.forceVerify(msg, args)
+
+        functions.forceVerify(msg, args);
         break;
 
       // Add a guest to server
-      case `${process.env.PREFIX}addGuest` :
+      case `${process.env.PREFIX}addGuest`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
@@ -107,7 +107,7 @@ bot.on("message", async (msg) => {
           break;
         }
 
-        functions.addGuest(msg, args[0])
+        functions.addGuest(msg, args[0]);
         break;
 
       // Loookup people
@@ -128,7 +128,7 @@ bot.on("message", async (msg) => {
 
       // Random Commands
       case `${process.env.PREFIX}honk`:
-        msg.channel.send(" HONK");
+        msg.channel.send("HONK");
         break;
 
       case `${process.env.PREFIX}help`:
@@ -136,8 +136,16 @@ bot.on("message", async (msg) => {
           let help = new Discord.MessageEmbed()
             .setColor("#ffffff")
             .setTitle("Help")
-            .addField(`${process.env.PREFIX}verify [UW-USERNAME]`, "Verify your status as a member of the SYDE program for access to the server", true)
-            .addField(`${process.env.PREFIX}confirm [TOKEN]`, "Confirm your student staus with the verification token sent to your student email", true)
+            .addField(
+              `${process.env.PREFIX}verify [UW-USERNAME]`,
+              "Verify your status as a member of the SYDE program for access to the server",
+              true
+            )
+            .addField(
+              `${process.env.PREFIX}confirm [TOKEN]`,
+              "Confirm your student staus with the verification token sent to your student email",
+              true
+            )
             .addField(`${process.env.PREFIX}honk`, "Umm, just honk", true)
             .setFooter("Goose Bot - Shivam Sharma");
           msg.channel.send(help);
@@ -153,4 +161,4 @@ bot.on("message", async (msg) => {
   }
 });
 
-bot.login(vars.token);
+bot.login(process.env.TOKEN);
