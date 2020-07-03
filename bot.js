@@ -4,9 +4,6 @@ const keep_alive = require("./keep_alive.js");
 // Functions for data storage & managing profiles
 const functions = require("./functions.js");
 
-// Preset variables
-const vars = require("./setup.json");
-
 // The Discord Bot itself
 const Discord = require("discord.js");
 const bot = new Discord.Client();
@@ -30,7 +27,7 @@ bot.on("reconnecting", () => {
 bot.on("message", async (msg) => {
   if (msg.author.bot) return;
 
-  if (msg.content.substring(0, 1) == vars.prefix) {
+  if (msg.content.substring(0, 1) == process.env.PREFIX) {
     let msgArray = msg.content.split(" ");
     let cmd = msgArray[0];
     let args = msgArray.slice(1);
@@ -39,10 +36,10 @@ bot.on("message", async (msg) => {
     switch (cmd) {
 
       // Verify new users through e-mail
-      case `${vars.prefix}verify`:
+      case `${process.env.PREFIX}verify`:
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}verify [UW-USERNAME]`
+            `Invalid syntax, try ${process.env.PREFIX}verify [UW-USERNAME]`
           );
           break;
         }
@@ -65,15 +62,15 @@ bot.on("message", async (msg) => {
         break;
 
       // Confirm the user's identity with their token
-      case `${vars.prefix}confirm`:
+      case `${process.env.PREFIX}confirm`:
         if (args.length != 1) {
-          msg.channel.send(`Invalid syntax, try ${vars.prefix}confirm [TOKEN]`);
+          msg.channel.send(`Invalid syntax, try ${process.env.PREFIX}confirm [TOKEN]`);
           break;
         }
         if (!functions.isInDatabase(msg, msg.author.id)) {
           msg.channel.send(
             `You aren't in my database!` +
-              `\nRun \`${vars.prefix}verify [UW-USERNAME]\` first, or double check the Username`
+              `\nRun \`${process.env.PREFIX}verify [UW-USERNAME]\` first, or double check the Username`
           );
           break;
         }
@@ -82,14 +79,14 @@ bot.on("message", async (msg) => {
         break;
 
       // Manually verify a user
-      case `${vars.prefix}forceVerify`:
+      case `${process.env.PREFIX}forceVerify`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
         if (args.length != 1 && args.length != 2) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}forceVerify [UW-USERNAME] [?ROLE]`
+            `Invalid syntax, try ${process.env.PREFIX}forceVerify [UW-USERNAME] [?ROLE]`
           );
           break;
         }
@@ -98,14 +95,14 @@ bot.on("message", async (msg) => {
         break;
 
       // Add a guest to server
-      case `${vars.prefix}addGuest` :
+      case `${process.env.PREFIX}addGuest` :
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}addGuest [@DISCORD]`
+            `Invalid syntax, try ${process.env.PREFIX}addGuest [@DISCORD]`
           );
           break;
         }
@@ -114,14 +111,14 @@ bot.on("message", async (msg) => {
         break;
 
       // Loookup people
-      case `${vars.prefix}lookupUser`:
+      case `${process.env.PREFIX}lookupUser`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
         if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${vars.prefix}lookupPerson [UW-USERNAME]`
+            `Invalid syntax, try ${process.env.PREFIX}lookupPerson [UW-USERNAME]`
           );
           break;
         }
@@ -130,18 +127,18 @@ bot.on("message", async (msg) => {
         break;
 
       // Random Commands
-      case `${vars.prefix}honk`:
+      case `${process.env.PREFIX}honk`:
         msg.channel.send(" HONK");
         break;
 
-      case `${vars.prefix}help`:
+      case `${process.env.PREFIX}help`:
         if (args.length == 0) {
           let help = new Discord.MessageEmbed()
             .setColor("#ffffff")
             .setTitle("Help")
-            .addField(`${vars.prefix}verify [UW-USERNAME]`, "Verify your status as a member of the SYDE program for access to the server", true)
-            .addField(`${vars.prefix}confirm [TOKEN]`, "Confirm your student staus with the verification token sent to your student email", true)
-            .addField(`${vars.prefix}honk`, "Umm, just honk", true)
+            .addField(`${process.env.PREFIX}verify [UW-USERNAME]`, "Verify your status as a member of the SYDE program for access to the server", true)
+            .addField(`${process.env.PREFIX}confirm [TOKEN]`, "Confirm your student staus with the verification token sent to your student email", true)
+            .addField(`${process.env.PREFIX}honk`, "Umm, just honk", true)
             .setFooter("Goose Bot - Shivam Sharma");
           msg.channel.send(help);
         }

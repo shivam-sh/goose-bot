@@ -23,4 +23,4 @@ The main feature of the bot is its integration with UW's LDAP to provide a verif
 
 
 ## Setup
-The bot should be ready to go after you drop in your own variables into a setup.json file and adding "Verified" and "Guest" roles to your discord server
+The bot should be ready to go after you drop in your own variables into a .env file and adding "Verified" and "Guest" roles to your discord server
