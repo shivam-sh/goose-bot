@@ -1,5 +1,5 @@
 // Load Environment Variables
-require('dotenv').config();
+require("dotenv").config();
 
 // Token generator
 const crypto = require("crypto");
@@ -7,7 +7,7 @@ const crypto = require("crypto");
 // Helps parse .json from webserver
 const fetch = require("node-fetch");
 
-// Email setup to send verification codes
+// Email setup
 const nodemailer = require("nodemailer");
 const mailAccount = nodemailer.createTransport({
   host: process.env.HOST,
@@ -25,39 +25,35 @@ const fs = require(`fs`);
 // Discord for message handling
 const Discord = require("discord.js");
 
+// Global variables to hold file info
 var rawData;
 var people;
 var stats;
 
+// Specify functions to be exported
 module.exports = {
-  logData: function (guildID) {
-    this.loadData(guildID);
-
-    console.log(people);
-  },
-
+  // Check if someone has already claimed & verified a username
   isUsernameTaken: function (userID, msg) {
     this.loadData(msg.guild.id);
-
     if (stats.claimed[userID]) {
       return true;
     }
     return false;
   },
 
+  // Checks if a given discord ID is already in the database
   isInDatabase: function (msg, discID) {
     this.loadData(msg.guild.id);
-
     if (people[discID]) {
       return true;
     }
     return false;
   },
 
+  // Checks if a given person has already ran the verify command
   alreadyRanVerify: function (msg, args) {
     let discID = msg.author.id;
     let uwID = args[0];
-
     try {
       if (people[discID].uwID == uwID) {
         return true;
@@ -66,12 +62,14 @@ module.exports = {
     return false;
   },
 
+  // Verifies that the person is part of the correct program and adds them to the database for further actions
   verify: function (msg, args) {
     let guild = msg.guild.id;
     let uwID = args[0];
     let discID = msg.author.id;
     let url = `https://api.uwaterloo.ca/v2/directory/${uwID}.json?key=${process.env.UWAPIKEY}`;
 
+    // Get the JSON from the url and parse it
     fetch(url, { method: "Get" })
       .then((res) => res.json())
       .then((json, reject) => {
@@ -79,6 +77,7 @@ module.exports = {
           console.log(url);
           throw `Look like you're not in UW's database! This is likely due to an incorrect UserID, try again. \nIf you think this is a mistake use @Admin!`;
         } else {
+          // Add the person to the database to prepare for future interactions
           this.loadData(guild);
 
           people[discID] = {
@@ -96,7 +95,6 @@ module.exports = {
           };
 
           msg.channel.send(`Great! I added ${uwID} to my database.`);
-
           stats.info.requests++;
           if (json.data.department === `ENG/Systems Design`) {
             stats.info.numInSyde++;
@@ -108,6 +106,7 @@ module.exports = {
         }
       })
       .then((user) => {
+        // Send an email to their account for identity confirmation
         try {
           mailAccount.sendMail({
             from: `"Goose Bot 👻" <${process.env.EMAIL}>`, // sender address
@@ -124,7 +123,8 @@ module.exports = {
           msg.channel.send(
             `I'm sending you an email to your UW Outlook account!`
           );
-        } catch {
+        } catch(err) {
+          console.log(err);
           throw "Error sending email! An <@&694339748528914472> will send your verification token to you";
         }
 
@@ -138,12 +138,10 @@ module.exports = {
       })
       .then(() => {
         this.saveData(guild);
-        people = null;
-        stats = null;
-        rawData = null;
       });
   },
 
+  // Confirm the user's identity and associate their discord with their UW account
   confirm: function (msg, args) {
     let guild = msg.guild.id;
     let discID = msg.author.id;
@@ -165,6 +163,7 @@ module.exports = {
     } else if (people[discID].token != token) {
       msg.reply(` incorrect token!`);
     } else {
+      // Set role to verified
       try {
         msg.member.roles.add(verified);
         people[discID].verification = "Verified";
@@ -212,23 +211,6 @@ module.exports = {
         `Verified ${people[member.id].discName}! \nWelcome to the server :)`
       );
       stats.info.numVerified++;
-
-      console.log(args.length);
-      console.log(args[1]);
-      if (args.length == 2) {
-        try {
-          let role = args[1].replace("-", " ");
-          console.log(role);
-          role = msg.guild.roles.cache.find((role) => role.name == role);
-
-          console.log(role);
-          if (role) {
-            member.roles.add(role);
-          }
-        } catch {
-          msg.channel.send("Couldn't assign role \"" + role + '"');
-        }
-      }
 
       this.saveData(guild);
     } catch (err) {
@@ -285,6 +267,7 @@ module.exports = {
     }
   },
 
+  // Look up a user in UW's database
   lookupUser: function (msg, args) {
     let url = `https://api.uwaterloo.ca/v2/directory/${args[0]}.json?key=${process.env.UWAPIKEY}`;
 
@@ -309,6 +292,7 @@ module.exports = {
       });
   },
 
+  // Load the database associated with the current guild/ init new if it doesn't exist
   loadData: function (guildID) {
     try {
       rawData = fs.readFileSync(`.data/people-${guildID}.json`);
@@ -333,6 +317,7 @@ module.exports = {
     }
   },
 
+  // Save the current database state to the filesystem
   saveData: function (guildID) {
     try {
       rawData = JSON.stringify(people, null, 4);

@@ -4,7 +4,7 @@ const functions = require("./functions.js");
 // Load Environment Variables
 require('dotenv').config();
 
-// The Discord Bot itself
+// Discord Bot Setup
 const Discord = require("discord.js");
 const bot = new Discord.Client();
 
@@ -23,18 +23,21 @@ bot.on("reconnecting", () => {
   console.log(`[NOTICE] Reconnect Action: Reconnecting to Discord...`);
 });
 
-// Handle bot commands from Discord
+// Discord message handler
 bot.on("message", async (msg) => {
-  if (msg.author.bot) return;
+  if ((msg.author.bot) || message.guild === null) return;
 
   if (msg.content.substring(0, 1) == process.env.PREFIX) {
+
+    // Break up message into more usable chunks | "~command var1 var2 var3" => cmd: "~command" & args:["arg1", "arg2", "arg3"]
     let msgArray = msg.content.split(" ");
     let cmd = msgArray[0];
     let args = msgArray.slice(1);
 
-    // The various cases for incoming commands
+    // Switch to handle all commands
     switch (cmd) {
-      // Verify new users through e-mail
+
+      // Verify new users through email
       case `${process.env.PREFIX}verify`:
         if (args.length != 1) {
           msg.channel.send(
@@ -84,9 +87,9 @@ bot.on("message", async (msg) => {
           msg.reply(`You need Admin privileges to use that command!`);
           break;
         }
-        if (args.length != 1 && args.length != 2) {
+        if (args.length != 1) {
           msg.channel.send(
-            `Invalid syntax, try ${process.env.PREFIX}forceVerify [UW-USERNAME] [?ROLE]`
+            `Invalid syntax, try ${process.env.PREFIX}forceVerify [UW-USERNAME]`
           );
           break;
         }
@@ -94,7 +97,7 @@ bot.on("message", async (msg) => {
         functions.forceVerify(msg, args);
         break;
 
-      // Add a guest to server
+      // Add a guest to the server
       case `${process.env.PREFIX}addGuest`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
@@ -110,7 +113,7 @@ bot.on("message", async (msg) => {
         functions.addGuest(msg, args[0]);
         break;
 
-      // Loookup people
+      // Loookup people in database
       case `${process.env.PREFIX}lookupUser`:
         if (!msg.member.hasPermission("ADMINISTRATOR")) {
           msg.reply(`You need Admin privileges to use that command!`);
@@ -126,11 +129,12 @@ bot.on("message", async (msg) => {
         functions.lookupUser(msg, args);
         break;
 
-      // Random Commands
+      // Bot test command
       case `${process.env.PREFIX}honk`:
         msg.channel.send("HONK");
         break;
 
+      // Help command to inform server members
       case `${process.env.PREFIX}help`:
         if (args.length == 0) {
           let help = new Discord.MessageEmbed()
@@ -152,6 +156,7 @@ bot.on("message", async (msg) => {
         }
         break;
 
+      // Fallback for any exceptions
       default:
         msg.channel.send(
           "Sorry, I don't know that command yet :(\nTry `~help` to see what I can do!"
