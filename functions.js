@@ -1,3 +1,6 @@
+// Load Environment Variables
+require('dotenv').config();
+
 // Token generator
 const crypto = require("crypto");
 
@@ -9,10 +12,10 @@ const nodemailer = require("nodemailer");
 const mailAccount = nodemailer.createTransport({
   host: process.env.HOST,
   port: process.env.PORT,
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
-    user: process.env.EMAIL, // generated ethereal user
-    pass: process.env.EMAILPASS, // generated ethereal password
+    user: process.env.EMAIL,
+    pass: process.env.EMAILPASS,
   },
 });
 
