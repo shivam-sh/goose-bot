@@ -25,7 +25,7 @@ bot.on("reconnecting", () => {
 
 // Discord message handler
 bot.on("message", async (msg) => {
-  if ((msg.author.bot) || message.guild === null) return;
+  if ((msg.author.bot) || msg.guild === null) return;
 
   if (msg.content.substring(0, 1) == process.env.PREFIX) {
 
