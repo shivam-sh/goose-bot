@@ -104,6 +104,24 @@ bot.on("message", async (msg) => {
 				functions.forceVerify(msg, args);
 				break;
 
+			// Link a discord user with a UW username
+			case `${process.env.PREFIX}linkUser`:
+				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
+					msg.reply(
+						`You need the ${process.env.ROLE_ADMIN} role to use that command!`
+					);
+					break;
+				}
+				if (args.length != 2) {
+					msg.channel.send(
+						`Invalid syntax, try ${process.env.PREFIX}linkUser [@DISCORD] [UW-USERNAME]`
+					);
+					break;
+				}
+
+				functions.linkUser(msg, args);
+				break;
+
 			// Add a guest to the server
 			case `${process.env.PREFIX}addGuest`:
 				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
@@ -156,7 +174,7 @@ bot.on("message", async (msg) => {
 							true
 						)
 						.addField(
-							`${process.env.PREFIX}confirm [TOKEN]`,
+							`${process.env.PREFIX}confirm [VERIFICATION-TOKEN]`,
 							"Confirm your student status with the verification token sent to your student email",
 							true
 						)
