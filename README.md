@@ -15,7 +15,6 @@ The main feature of the bot is its integration with UW's LDAP to provide a verif
 
 ### General Commands
 ```
-~verify [UW-USERNAME]			// Starts the verification process and links the discord to the UW account
 ~addToChat [@USER]              // Gives the mentioned user permission to view the channel the command is sent in
 ```
 
