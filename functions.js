@@ -298,11 +298,15 @@ module.exports = {
 					}
 
 					// If the server member is already verified, show that in the database
-					 if (member.roles.cache.some(role => role.name === process.env.ROLE_VERIFIED)) {
+					if (
+						member.roles.cache.some(
+							(role) => role.name === process.env.ROLE_VERIFIED
+						)
+					) {
 						stats.info.numVerified++;
 						people[member.id].verification = "Verified";
 						stats.claimed[uwID] = member.id;
-					 }
+					}
 
 					return;
 				}
@@ -396,6 +400,23 @@ module.exports = {
 					);
 				}
 			});
+	},
+
+	// Add a user to the chat the command was sent to
+	// Useful for chats where only certain people want access/want to decide who is let in
+	addToChat: function(msg) {
+		let member = msg.guild.member(msg.mentions.users.first());
+
+		if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_VERIFIED)) {
+			msg.channel.send(`The user you mentioned hasn't gone through verification! \nUse @${process.env.ROLE_ADMIN} to request their verification`);
+			return;
+		}
+
+		msg.channel.updateOverwrite(member, {
+			VIEW_CHANNEL: true,
+			SEND_MESSAGES: true,
+			READ_MESSAGE_HISTORY: true
+		});
 	},
 
 	// Check if someone has already claimed & verified a username
