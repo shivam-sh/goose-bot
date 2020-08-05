@@ -182,4 +182,4 @@ bot.on("message", async (msg) => {
 	}
 });
 
-bot.login(process.env.TOKEN);
+bot.login(process.env.DISCORD_TOKEN);
