@@ -156,6 +156,19 @@ bot.on("message", async (msg) => {
 				}
 				functions.lookupUser(msg, args);
 				break;
+				
+			// Add another member to the current chat
+			// (Made for chats with individual members, not roles)
+				case `${process.env.PREFIX}addToChat`:
+					if (args.length != 1) {
+						msg.channel.send(
+							`Invalid syntax, try ${process.env.PREFIX}addToChat [@DISCORD]`
+						);
+						break;
+					}
+
+					functions.addToChat(msg);
+				break;
 
 			// Bot test command
 			case `${process.env.PREFIX}honk`:
