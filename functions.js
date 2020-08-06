@@ -115,10 +115,7 @@ module.exports = {
 
 					msg.channel.send(`Great! I added ${uwID} to my database.`);
 					stats.info.requests++;
-					if (
-						json.data.department ===
-						process.env.PROGRAM_CONFIRMATION
-					) {
+					if (json.data.department === process.env.PROGRAM_CONFIRMATION) {
 						stats.info.numInProgram++;
 					} else {
 						throw `You're not in ${process.env.PROGRAM_NAME}! An @${process.env.ROLE_ADMIN} can give you a guest role if you would like access to the server`;
@@ -133,10 +130,7 @@ module.exports = {
 					mailAccount.sendMail({
 						from: `"Goose Bot 👻" <${process.env.EMAIL}>`, // sender address
 						to: user.email[0], // receiver address
-						subject:
-							"UW " +
-							process.env.PROGRAM_NAME +
-							" Verification ✔", // Subject line
+						subject: "UW " + process.env.PROGRAM_NAME + " Verification ✔", // Subject line
 						text: `TOKEN: ${user.token}`, // plain text body
 						html: `<b>HONK</b></br>
 						Hey! Your verification token is: ${user.token}</br>
@@ -188,17 +182,13 @@ module.exports = {
 				.add(verified)
 				.then(() => {
 					people[discID].verification = "Verified";
-					msg.reply(
-						`Verified ${people[discID].uwID}! \nWelcome to the server! :)`
-					);
+					msg.reply(`Verified ${people[discID].uwID}! \nWelcome to the server! :)`);
 					stats.info.numVerified++;
 					stats.claimed[people[discID].uwID] = discID;
 					this.saveData(guild);
 				})
 				.catch((err) => {
-					console.log(
-						`[ERROR] - Couldn't verify ${people[discID].uwID} \n${err}`
-					);
+					console.log(`[ERROR] - Couldn't verify ${people[discID].uwID} \n${err}`);
 					msg.channel.send(
 						`Couldn't verify ${people[discID].uwID}, check logs for reason`
 					);
@@ -210,9 +200,7 @@ module.exports = {
 	forceVerify: function (msg) {
 		let guild = msg.guild.id;
 		let member = msg.guild.member(msg.mentions.users.first());
-		let verified = msg.guild.roles.cache.find(
-			(role) => role.name == process.env.ROLE_VERIFIED
-		);
+		let verified = msg.guild.roles.cache.find((role) => role.name == process.env.ROLE_VERIFIED);
 
 		this.loadData(guild);
 
@@ -231,22 +219,14 @@ module.exports = {
 		member.roles
 			.add(verified)
 			.then(() => {
-				people[
-					member.id
-				].discName = `${member.user.username}#${member.user.discriminator}`;
+				people[member.id].discName = `${member.user.username}#${member.user.discriminator}`;
 				people[member.id].verification = "Verified";
-				msg.reply(
-					`Verified ${
-						people[member.id].discName
-					}! \nWelcome to the server! :)`
-				);
+				msg.reply(`Verified ${people[member.id].discName}! \nWelcome to the server! :)`);
 				stats.info.numVerified++;
 				this.saveData(guild);
 			})
 			.catch((err) => {
-				console.log(
-					`[ERROR] - Couldn't verify ${people[discID].discName} \n${err}`
-				);
+				console.log(`[ERROR] - Couldn't verify ${people[discID].discName} \n${err}`);
 				msg.channel.send(
 					`Couldn't verify ${people[discID].discName}, check logs for reason`
 				);
@@ -288,10 +268,7 @@ module.exports = {
 
 					msg.channel.send(`Great! I added ${uwID} to my database.`);
 					stats.info.requests++;
-					if (
-						json.data.department ===
-						process.env.PROGRAM_CONFIRMATION
-					) {
+					if (json.data.department === process.env.PROGRAM_CONFIRMATION) {
 						stats.info.numInProgram++;
 					} else {
 						throw `This user isn't in ${process.env.PROGRAM_NAME}!`;
@@ -299,9 +276,7 @@ module.exports = {
 
 					// If the server member is already verified, show that in the database
 					if (
-						member.roles.cache.some(
-							(role) => role.name === process.env.ROLE_VERIFIED
-						)
+						member.roles.cache.some((role) => role.name === process.env.ROLE_VERIFIED)
 					) {
 						stats.info.numVerified++;
 						people[member.id].verification = "Verified";
@@ -325,9 +300,7 @@ module.exports = {
 	addGuest: function (msg) {
 		let guild = msg.guild.id;
 		let member = msg.guild.member(msg.mentions.users.first());
-		let guest = msg.guild.roles.cache.find(
-			(role) => role.name === process.env.ROLE_GUEST
-		);
+		let guest = msg.guild.roles.cache.find((role) => role.name === process.env.ROLE_GUEST);
 		this.loadData(guild);
 
 		try {
@@ -351,28 +324,16 @@ module.exports = {
 		member.roles
 			.add(guest)
 			.then(() => {
-				people[
-					member.id
-				].discName = `${member.user.username}#${member.user.discriminator}`;
+				people[member.id].discName = `${member.user.username}#${member.user.discriminator}`;
 				people[member.id].verification = "Guest";
-				msg.reply(
-					`Added Guest ${
-						people[member.id].discName
-					}! \nWelcome to the server! :)`
-				);
+				msg.reply(`Added Guest ${people[member.id].discName}! \nWelcome to the server! :)`);
 				stats.info.numGuests++;
 				this.saveData(guild);
 			})
 			.catch((err) => {
-				console.log(
-					`[ERROR] - Couldn't add guest ${
-						people[member.id].discName
-					} \n${err}`
-				);
+				console.log(`[ERROR] - Couldn't add guest ${people[member.id].discName} \n${err}`);
 				msg.channel.send(
-					`Couldn't add guest ${
-						people[member.id].discName
-					}, check logs for reason`
+					`Couldn't add guest ${people[member.id].discName}, check logs for reason`
 				);
 			});
 	},
@@ -395,27 +356,68 @@ module.exports = {
 						.setFooter("Goose Bot - Info parsed from UW LDAP");
 					msg.channel.send(lookup);
 				} else {
-					msg.channel.send(
-						`Lookup failed :( \n Double check the user id you entered`
-					);
+					msg.channel.send(`Lookup failed :( \n Double check the user id you entered`);
 				}
+			});
+	},
+
+	role: function (msg) {
+		const user = msg.member;
+
+		// Get the role by formatting the command to remove extra information
+		const roleStart = msg.content.indexOf(" ") + 1;
+		const roleName = msg.content.substr(roleStart);
+		const role = msg.guild.roles.cache.find((role) => role.name === roleName);
+
+		// If the user already has the role, remove it from their account
+		if (user.roles.cache.some((role) => role.name === roleName)) {
+			user.roles
+				.remove(role)
+				.then(() => {
+					msg.channel.send(
+						`Removed role ${roleName} from ${user}!`
+					);
+				})
+				.catch(() => {
+					msg.channel.send(
+						`Couldn't remove role ${roleName} from ${user}, please try again.`
+					);
+					console.log(`[ERROR] => ` + err);
+				});
+
+			return;
+		}
+
+		// Assign the role to the user
+		user.roles
+			.add(role)
+			.then(() => {
+				msg.channel.send(`Assigned role '${roleName}' to ${user}!`);
+			})
+			.catch((err) => {
+				msg.channel.send(
+					`Couldn't assign role '${roleName}' to ${user}, please try again.`
+				);
+				console.log(`[ERROR] => ` + err);
 			});
 	},
 
 	// Add a user to the chat the command was sent to
 	// Useful for chats where only certain people want access/want to decide who is let in
-	addToChat: function(msg) {
+	addToChat: function (msg) {
 		let member = msg.guild.member(msg.mentions.users.first());
 
-		if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_VERIFIED)) {
-			msg.channel.send(`The user you mentioned hasn't gone through verification! \nUse @${process.env.ROLE_ADMIN} to request their verification`);
+		if (!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_VERIFIED)) {
+			msg.channel.send(
+				`The user you mentioned hasn't gone through verification! \nUse @${process.env.ROLE_ADMIN} to request their verification`
+			);
 			return;
 		}
 
 		msg.channel.updateOverwrite(member, {
 			VIEW_CHANNEL: true,
 			SEND_MESSAGES: true,
-			READ_MESSAGE_HISTORY: true
+			READ_MESSAGE_HISTORY: true,
 		});
 	},
 
