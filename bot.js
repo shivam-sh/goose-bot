@@ -35,7 +35,7 @@ bot.on("message", async (msg) => {
 	if (msg.author.bot || msg.guild === null) return;
 
 	if (msg.content.substring(0, 1) == process.env.PREFIX) {
-    // Break up message into more usable chunks | "~command var1 var2 var3" => cmd: "~command" & args:["arg1", "arg2", "arg3"]
+		// Break up message into more usable chunks | "~command var1 var2 var3" => cmd: "~command" & args:["arg1", "arg2", "arg3"]
 		let msgArray = msg.content.split(" ");
 		let cmd = msgArray[0];
 		let args = msgArray.slice(1);
@@ -58,9 +58,7 @@ bot.on("message", async (msg) => {
 					break;
 				}
 				if (functions.alreadyRanVerify(msg, args)) {
-					msg.reply(
-						`I've already sent you an email for that username!`
-					);
+					msg.reply(`I've already sent you an email for that username!`);
 					break;
 				}
 
@@ -70,9 +68,7 @@ bot.on("message", async (msg) => {
 			// Confirm the user's identity with their token
 			case `${process.env.PREFIX}confirm`:
 				if (args.length != 1) {
-					msg.channel.send(
-						`Invalid syntax, try ${process.env.PREFIX}confirm [TOKEN]`
-					);
+					msg.channel.send(`Invalid syntax, try ${process.env.PREFIX}confirm [TOKEN]`);
 					break;
 				}
 				if (!functions.isInDatabase(msg, msg.author.id)) {
@@ -88,10 +84,8 @@ bot.on("message", async (msg) => {
 
 			// Manually verify a user
 			case `${process.env.PREFIX}forceVerify`:
-				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
-					msg.reply(
-						`You need the ${process.env.ROLE_ADMIN} role to use that command!`
-					);
+				if (!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_ADMIN)) {
+					msg.reply(`You need the ${process.env.ROLE_ADMIN} role to use that command!`);
 					break;
 				}
 				if (args.length != 1) {
@@ -106,10 +100,8 @@ bot.on("message", async (msg) => {
 
 			// Link a discord user with a UW username
 			case `${process.env.PREFIX}linkUser`:
-				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
-					msg.reply(
-						`You need the ${process.env.ROLE_ADMIN} role to use that command!`
-					);
+				if (!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_ADMIN)) {
+					msg.reply(`You need the ${process.env.ROLE_ADMIN} role to use that command!`);
 					break;
 				}
 				if (args.length != 2) {
@@ -124,10 +116,8 @@ bot.on("message", async (msg) => {
 
 			// Add a guest to the server
 			case `${process.env.PREFIX}addGuest`:
-				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
-					msg.reply(
-						`You need the ${process.env.ROLE_ADMIN} role to use that command!`
-					);
+				if (!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_ADMIN)) {
+					msg.reply(`You need the ${process.env.ROLE_ADMIN} role to use that command!`);
 					break;
 				}
 				if (args.length != 1) {
@@ -142,10 +132,8 @@ bot.on("message", async (msg) => {
 
 			// Lookup people in database
 			case `${process.env.PREFIX}lookupUser`:
-				if (!msg.member.roles.cache.some(role => role.name === process.env.ROLE_ADMIN)) {
-					msg.reply(
-						`You need the ${process.env.ROLE_ADMIN} role to use that command!`
-					);
+				if (!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_ADMIN)) {
+					msg.reply(`You need the ${process.env.ROLE_ADMIN} role to use that command!`);
 					break;
 				}
 				if (args.length != 1) {
@@ -156,18 +144,35 @@ bot.on("message", async (msg) => {
 				}
 				functions.lookupUser(msg, args);
 				break;
-				
+
+			// Set discord role if verified
+			case `${process.env.PREFIX}role`:
+				if (
+					!msg.member.roles.cache.some((role) => role.name === process.env.ROLE_VERIFIED)
+				) {
+					msg.reply(
+						`you need the ${process.env.ROLE_VERIFIED} role to use that command!`
+					);
+					break;
+				}
+				if (args.length < 1) {
+					msg.channel.send(`Invalid syntax, try ${process.env.PREFIX}role [ROLE-NAME]`);
+					break;
+				}
+
+				functions.role(msg);
+				break;
 			// Add another member to the current chat
 			// (Made for chats with individual members, not roles)
-				case `${process.env.PREFIX}addToChat`:
-					if (args.length != 1) {
-						msg.channel.send(
-							`Invalid syntax, try ${process.env.PREFIX}addToChat [@DISCORD]`
-						);
-						break;
-					}
+			case `${process.env.PREFIX}addToChat`:
+				if (args.length != 1) {
+					msg.channel.send(
+						`Invalid syntax, try ${process.env.PREFIX}addToChat [@DISCORD]`
+					);
+					break;
+				}
 
-					functions.addToChat(msg);
+				functions.addToChat(msg);
 				break;
 
 			// Bot test command
@@ -192,13 +197,12 @@ bot.on("message", async (msg) => {
 							true
 						)
 						.addField(
-							`${process.env.PREFIX}honk`,
-							"Umm, just honk",
+							`${process.env.PREFIX}role [ROLE-NAME]`,
+							"Assign/remove the specified role",
 							true
 						)
-						.setFooter(
-							"Shivam Sharma | https://github.com/shivam-sh"
-						);
+						.addField(`${process.env.PREFIX}honk`, "Umm, just honk", true)
+						.setFooter("Shivam Sharma | https://github.com/shivam-sh");
 					msg.channel.send(help);
 				}
 				break;

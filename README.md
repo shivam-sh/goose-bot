@@ -15,14 +15,15 @@ The main feature of the bot is its integration with UW's LDAP to provide a verif
 
 ### General Commands
 ```
-~addToChat [@USER]              // Gives the mentioned user permission to view the channel the command is sent in
+~role [ROLE-NAME]           // Assigns the mentioned role to the user or removes it if already assigned
+~addToChat [@USER]                  // Gives the mentioned user permission to view the channel the command is sent in
 ```
 
 
 ### Admin Commands
 ```
 ~forceVerify [UW-USERNAME] [?ROLE]	// Verifies the specified user without linking a UW account
-~linkUser [@USER] [UW-USERNAME]     // Links the specified discord to the given UW account
+~linkUser [@USER] [UW-USERNAME]         // Links the specified discord to the given UW account
 ~addGuest [@USER]			// Assigns the guest role to the specified user
 ~lookupUser [UW-USERNAME]		// Searches the UW LDAP for the specified user
 ```
