@@ -50,6 +50,7 @@ bot.on("message", async (msg) => {
 					);
 					break;
 				}
+				args[0] = args[0].toLowerCase().replace(/[^a-z0-9.]/g, "");
 				if (functions.isUsernameTaken(args[0], msg)) {
 					msg.channel.send(
 						`That username is already associated with a verified account!` +
