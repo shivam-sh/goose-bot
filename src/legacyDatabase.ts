@@ -6,8 +6,8 @@
  * the initial version of goose-bot where data is saved locally
  */
 
-import { Guild, Role } from 'discord.js'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { Role } from 'discord.js'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 
 interface User {
     fName: string
@@ -20,21 +20,21 @@ interface User {
     token: string
 }
 
-export class legacyDatabase {
+export class LegacyDatabase {
     private guildID: string
 
     private users: { [username: string]: User } = {}
     private stats?: JSON
 
 
-    static exists(guild: Guild): Boolean {
-        const guildID = guild.id
+    static exists(guildId: string): Boolean {
+        const guildID = guildId
         const exists = existsSync(`.data/people-${guildID}.json`) && existsSync(`.data/stats-${guildID}.json`)
         return exists ? true : false
     }
 
-    constructor(guild: Guild) {
-        this.guildID = guild.id
+    constructor(guildId: string) {
+        this.guildID = guildId
     }
 
     public load() {
@@ -51,7 +51,10 @@ export class legacyDatabase {
 
             return
         } catch {
-            writeFileSync(`.data/people-${this.guildID}.json`, `{}`);
+            writeFileSync(
+                `.data/people-${this.guildID}.json`, 
+                `{}`
+            );
             writeFileSync(
                 `.data/stats-${this.guildID}.json`,
                 `{}`
