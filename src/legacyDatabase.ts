@@ -6,8 +6,7 @@
  * the initial version of goose-bot where data is saved locally
  */
 
-import { Role } from 'discord.js'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 
 interface User {
     fName: string
