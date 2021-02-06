@@ -1,15 +1,19 @@
 import { existsSync, mkdirSync, readFileSync, rmdirSync } from "fs"
 import { LegacyDatabase } from "../src/legacyDatabase"
-import assert from 'assert'
 
 
 describe('Legacy Database', () => {
     let database: LegacyDatabase
 
-    it('should save and load file data properly', () => {
-        MockLegacyData.createDirectory()
-        database = new LegacyDatabase('testGuild')
+    beforeAll(() => {
+        return MockLegacyData.createDirectory();
+    })
 
+    beforeEach(() => {
+        return database = new LegacyDatabase('testGuild')
+    })
+
+    it('should save file data properly', () => {
         // @ts-ignore
         database.users = MockLegacyData.mockUsers
         // @ts-ignore
@@ -17,35 +21,27 @@ describe('Legacy Database', () => {
         
         database.save();
 
-        assert.strictEqual(
-            readFileSync(`.data/people-testGuild.json`).toString(),
-            JSON.stringify(MockLegacyData.mockUsers, null, 4),
-            "Users file not saved correctly"
-        );
-        assert.strictEqual(
-            readFileSync(`.data/stats-testGuild.json`).toString(),
-            JSON.stringify(MockLegacyData.mockStats, null, 4),
-            "Stats file not saved correctly"
-        );
+        expect(readFileSync(`.data/people-testGuild.json`).toString())
+            .toEqual(JSON.stringify(MockLegacyData.mockUsers, null, 4))
 
-        database = new LegacyDatabase('testGuild')
+        expect(readFileSync(`.data/stats-testGuild.json`).toString())
+            .toEqual(JSON.stringify(MockLegacyData.mockStats, null, 4))
+    })
 
+    it('should load file data properly', () => {
         database.load();
 
         // @ts-ignore
-        assert.strictEqual(
-            // @ts-ignore
-            JSON.stringify(database.users), 
-            JSON.stringify(MockLegacyData.mockUsers),
-            "Users weren't loaded correctly")
-        // @ts-ignore
-        assert.strictEqual(
-            // @ts-ignore
-            JSON.stringify(database.stats), 
-            JSON.stringify(MockLegacyData.mockStats), 
-            "Stats weren't loaded correctly")
+        expect(JSON.stringify(database.users))
+            .toEqual(JSON.stringify(MockLegacyData.mockUsers))
 
-        MockLegacyData.clearDirectory();
+        // @ts-ignore
+        expect(JSON.stringify(database.stats))
+            .toEqual(JSON.stringify(MockLegacyData.mockStats))
+    })
+
+    afterAll(() => {
+        return MockLegacyData.clearDirectory();
     })
 })
 
