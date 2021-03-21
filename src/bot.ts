@@ -6,13 +6,13 @@
  */
 
 import { botConfig } from "./config";
-import Discord from 'discord.js'
+import Discord from 'discord.js';
 import { MessageHandler } from './services/messageHandler';
 
 const bot = new Discord.Client();
-bot.login(botConfig.discordToken);
+const messageHandler = new MessageHandler();
 
-MessageHandler.listener.start(bot);
+bot.login(botConfig.discordToken);
 
 bot.on("ready", async () => {
 	console.log( 
@@ -22,6 +22,8 @@ bot.on("ready", async () => {
 / /_/ / /_/ / /_/ (__  )  __/  / /_/ / /_/ / /_
 \\____/\\____/\\____/____/\\___/  /_____/\\____/\\__/
 -----------------------------------------------
-`, `\n[CONNECT] ${bot.user!.tag} is online!\n`
+`, `\n[CONNECTED] ${bot.user!.tag} is online!\n`
 	);
+	
+	messageHandler.start(bot);
 });
