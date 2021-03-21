@@ -2,7 +2,7 @@
  * Goose Bot
  * Shivam Sh | https://github.com/shivam-sh
  * 
- * legacyDatabase.ts provides backwards compatibility for
+ * legacyDatabaseWrapper.ts provides backwards compatibility for
  * the initial version of goose-bot where data is saved locally
  */
 
@@ -19,9 +19,8 @@ interface User {
     token: string
 }
 
-export class LegacyDatabase {
+export class LegacyDatabaseWrapper {
     private guildID: string
-
     private users: { [username: string]: User } = {}
     private stats?: JSON
 
