@@ -1,16 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, rmdirSync } from "fs"
-import { LegacyDatabase } from "../src/legacyDatabase"
+import { LegacyDatabaseWrapper } from "../../src/models/legacyDatabaseWrapper"
 
 
 describe('Legacy Database', () => {
-    let database: LegacyDatabase
+    let database: LegacyDatabaseWrapper
 
     beforeAll(() => {
         return MockLegacyData.createDirectory();
     })
 
     beforeEach(() => {
-        return database = new LegacyDatabase('testGuild')
+        return database = new LegacyDatabaseWrapper('testGuild')
     })
 
     it('should save file data properly', () => {
