@@ -5,27 +5,32 @@
  * Executes a command once it's been sent to the bot
  */
 
-import { botConfig } from "../config";
 import { Message } from 'discord.js';
 import EventEmitter from 'events';
+
+// Import Command Handlers
+import { CommandHandler } from "./commandRunners/commandHandler";
 import { VerificationCoordinator } from "./commandRunners/verificationCoordinator";
-import CommandRunner from "./commandRunners/commandRunner";
 
 export class MessageHandler {
 	start(emitter: EventEmitter) {
-		emitter.on('message', async message =>  this.execute(message));
+		emitter.on('message', async message => this.handle(message));
 	}
 
-	execute(message: Message) {
-		const messageArray = message.content.split(" ");
-		const command = messageArray[0].slice(1).toLowerCase();
-
-		const commandRunners: CommandRunner[] = [
-			new VerificationCoordinator(),
+	handle(message: Message) {
+		const commandHandlers: CommandHandler[] = [
+			new VerificationCoordinator()
 		];
 
-		let potentialRunners = commandRunners.filter(runner => runner.canHandle(message));
+		let validHandlers = commandHandlers.filter(runner => runner.canHandle(message));
+		let validCommands = validHandlers.map(runner => runner.commandFor(message));
+		let runResults = validCommands.map(command => command(message));
 
-		//TODO: Run the command for each potentialRunner, and manage the result from each
+		Promise.any(runResults).then(result => {
+			if(result.isError) {
+				console.error('[ERROR] - ' + result.error.message);
+				message.reply(result.error.message);
+			}
+		});
 	}
 }
