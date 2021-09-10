@@ -71,5 +71,5 @@
   "include": [
     "/src/*.ts",
     "src/**/*.ts"
-  ]
+, "config.ts"  ]
 }
