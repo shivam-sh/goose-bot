@@ -14,6 +14,7 @@ import { bot } from '../config';
 
 import fs from 'fs';
 import path from 'path';
+import { SlashCommandBuilder } from '@discordjs/builders';
 
 export class CommandManager {
   commands: Command[] = [];
@@ -31,25 +32,26 @@ export class CommandManager {
       Pack.commands.forEach(command => {
         this.commands.push(command);
       });
-
-      const rest = new REST({ version: '9' }).setToken(bot.token);
-
-      (async () => {
-        try {
-          await rest.put(
-            // TODO: Procedural registration of guild & global commands
-            // Currently only guild commands are implemented for dev purposes 
-            // as are updated instantly
-            Routes.applicationGuildCommands(bot.clientID, bot.guildID),
-            { body: this.commands.flatMap((command) => command.declaration.toJSON()) },
-          );
-
-          console.log('Successfully registered application commands.');
-        } catch (error) {
-          console.error(error);
-        }
-      })();
     });
+
+    const rest = new REST({ version: '9' }).setToken(bot.token);
+
+    (async () => {
+      console.log('[STATUS] - Attempting to register application commands.');
+      try {
+        await rest.put(
+          // TODO: Procedural registration of guild & global commands
+          // Currently only guild commands are implemented for dev purposes 
+          // as are updated instantly
+          Routes.applicationGuildCommands(bot.clientID, bot.guildID),
+          { body: this.commands.flatMap((command) => (command.declaration as SlashCommandBuilder).toJSON()) },
+        );
+
+        console.log('[STATUS] - Successfully registered application commands.');
+      } catch (error) {
+        console.error(error);
+      }
+    })();
   }
 
   handle(interaction: CommandInteraction) {
