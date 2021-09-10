@@ -8,7 +8,7 @@
     "test": "jest",
     "test:watch": "npm run test --watch",
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node build/bot.ts"
+    "start": "npm run build && node build/client.js"
   },
   "repository": {
     "type": "git",

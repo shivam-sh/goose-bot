@@ -15,7 +15,7 @@ module.exports = class Default implements CommandPack {
         .setName("honk")
         .setDescription("HONK"),
       (interaction) => {
-        interaction.reply('HONK!');
+        interaction.reply('***HONK!***');
       })
   ];
 }
