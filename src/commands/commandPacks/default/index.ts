@@ -12,10 +12,10 @@ module.exports = class Default implements CommandPack {
   commands = [
     new Command(
       new SlashCommandBuilder()
-        .setName("honk")
-        .setDescription("HONK"),
+        .setName('honk')
+        .setDescription('Make Goose Bot HONK'),
       (interaction) => {
         interaction.reply('***HONK!***');
-      })
+      }),
   ];
-}
+};

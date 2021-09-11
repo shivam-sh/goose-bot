@@ -7,6 +7,7 @@
     "dev": "ts-node-dev src/*",
     "test": "jest",
     "test:watch": "npm run test --watch",
+    "lint": "eslint 'src/**/*.{js,ts}' --fix",
     "build": "rimraf ./build && tsc",
     "start": "npm run build && node build/client.js"
   },
@@ -35,8 +36,14 @@
   },
   "devDependencies": {
     "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.31.0",
+    "@typescript-eslint/parser": "^4.31.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.1.1",
     "nodemailer": "^6.4.17",
+    "prettier": "^2.4.0",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",

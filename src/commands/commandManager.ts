@@ -20,16 +20,18 @@ export class CommandManager {
   commands: Command[] = [];
   commandPacks: CommandPack[] = [];
 
-  start() {
-    const folders = fs.readdirSync(path.normalize('src/commands/commandPacks')).filter(file =>
-      fs.lstatSync(path.normalize('src/commands/commandPacks/' + file)).isDirectory());
+  start(): void {
+    const folders = fs
+      .readdirSync(path.normalize('src/commands/commandPacks'))
+      .filter((file) => fs.lstatSync(path.normalize('src/commands/commandPacks/' + file)).isDirectory());
 
     folders.forEach(async (folder) => {
+      // eslint-disable-next-line
       const Module = require('./commandPacks/' + folder);
       const Pack = new Module() as CommandPack;
-      this.commandPacks.push(Pack)
+      this.commandPacks.push(Pack);
 
-      Pack.commands.forEach(command => {
+      Pack.commands.forEach((command) => {
         this.commands.push(command);
       });
     });
@@ -41,8 +43,8 @@ export class CommandManager {
       try {
         await rest.put(
           // TODO: Procedural registration of guild & global commands
-          // Currently only guild commands are implemented for dev purposes 
-          // as are updated instantly
+          // Currently only guild commands are implemented for dev purposes
+          // as these are updated instantly
           Routes.applicationGuildCommands(bot.clientID, bot.guildID),
           { body: this.commands.flatMap((command) => (command.declaration as SlashCommandBuilder).toJSON()) },
         );
@@ -54,13 +56,13 @@ export class CommandManager {
     })();
   }
 
-  handle(interaction: CommandInteraction) {
-    this.commandPacks.forEach(pack => {
-      pack.commands.forEach(command => {
+  handle(interaction: CommandInteraction): void {
+    this.commandPacks.forEach((pack) => {
+      pack.commands.forEach((command) => {
         if (interaction.commandName == command.declaration.name) {
           command.run(interaction);
         }
-      })
-    })
+      });
+    });
   }
 }

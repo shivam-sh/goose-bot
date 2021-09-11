@@ -6,14 +6,16 @@ export interface CommandPack {
   commands: Command[];
 }
 
-
 export interface Command {
   declaration: SlashCommandBuilder | SharedNameAndDescription | SlashCommandSubcommandBuilder;
   run: (interaction: CommandInteraction) => void;
 }
 
 export class Command implements Command {
-  constructor(declaration: SlashCommandBuilder | SharedNameAndDescription | SlashCommandSubcommandBuilder, run: (interaction: CommandInteraction) => void) {
+  constructor(
+    declaration: SlashCommandBuilder | SharedNameAndDescription | SlashCommandSubcommandBuilder,
+    run: (interaction: CommandInteraction) => void,
+  ) {
     this.declaration = declaration;
     this.run = run;
   }
