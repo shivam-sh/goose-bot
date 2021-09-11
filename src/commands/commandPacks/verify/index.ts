@@ -186,7 +186,16 @@ module.exports = class UWVerify implements CommandPack {
               if (student.token == interaction.options.getString('token', true)) {
                 // Token matches
                 await collection.updateOne({ _id: userID }, { $set: { verified: true, verifiedBy: "token" } });
-                interaction.reply('Verified! 🚀');
+
+                var role = interaction.guild?.roles.cache.find(n => n.name == "UW");
+                if (role) {
+                  (interaction.member!.roles as GuildMemberRoleManager).add(role)
+                  interaction.reply('Verified! 🚀');
+                }
+                else {
+                  // TODO: Role customization
+                  interaction.editReply('Bot not configured correctly, need UW role!')
+                }
               }
               else {
                 interaction.reply('Invalid token!');
