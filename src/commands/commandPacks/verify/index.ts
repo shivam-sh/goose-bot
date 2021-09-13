@@ -2,21 +2,21 @@
  * Goose Bot
  * Shivam Sh | https://github.com/shivam-sh
  *
- * Default Goose Bot commands
+ * Goose Bot UW Verification command pack
  */
 
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { Collection, MongoClient } from 'mongodb';
+import { Collection, MongoClient, ObjectId } from 'mongodb';
 import Nodemailer from 'nodemailer';
 
 import { Command, CommandPack } from '../../commandPackType';
-import { mongo } from '../../../config';
-import { Student } from './studentType';
+import { mongo } from './config';
+import { Student, StudentObject } from './student';
 import { email } from '../../../config';
-import { ObjectID } from 'bson';
 import { CommandInteraction, GuildMemberRoleManager, Permissions } from 'discord.js';
+import { GuildConfig } from './guildConfig';
 
-module.exports = class UWVerify implements CommandPack {
+export default class UWVerify implements CommandPack {
   mongoURI =
     'mongodb+srv://' +
     mongo.username +
@@ -39,7 +39,7 @@ module.exports = class UWVerify implements CommandPack {
     },
   });
 
-  sendVerificationEmail(interaction: CommandInteraction, from: string, to: string, token: string) {
+  sendVerificationEmail(interaction: CommandInteraction, from: string, to: string, token: string): void {
     interaction.editReply('Sending email...');
     try {
       this.transporter.sendMail(
@@ -57,7 +57,7 @@ module.exports = class UWVerify implements CommandPack {
         },
         (err) => {
           if (err) {
-            interaction.editReply('Something went wrong while sending you the email. Please try again later.');
+            interaction.editReply('❗️ Something went wrong while sending you the email. Please try again later.');
             console.error(err);
           } else {
             interaction.editReply(
@@ -68,7 +68,7 @@ module.exports = class UWVerify implements CommandPack {
         },
       );
     } catch (err) {
-      interaction.reply('Something went wrong while sending the email. Please try again later.');
+      interaction.editReply('❗️ Something went wrong while sending the email. Please try again later.');
       console.error(err);
     }
   }
@@ -78,7 +78,6 @@ module.exports = class UWVerify implements CommandPack {
       new SlashCommandBuilder()
         .setName('verify')
         .setDescription('verification commands')
-
         .addSubcommand((subcommand) =>
           subcommand
             .setName('request')
@@ -90,7 +89,6 @@ module.exports = class UWVerify implements CommandPack {
                 .setRequired(true),
             ),
         )
-
         .addSubcommand((subcommand) =>
           subcommand
             .setName('confirm')
@@ -99,7 +97,6 @@ module.exports = class UWVerify implements CommandPack {
               option.setName('token').setDescription('the unique token sent to your student email').setRequired(true),
             ),
         )
-
         .addSubcommand((subcommand) =>
           subcommand
             .setName('force')
@@ -108,7 +105,6 @@ module.exports = class UWVerify implements CommandPack {
               option.setName('user').setDescription('the user to force verify').setRequired(true),
             ),
         )
-
         .addSubcommand((subcommand) =>
           subcommand
             .setName('wipe')
@@ -116,178 +112,244 @@ module.exports = class UWVerify implements CommandPack {
             .addUserOption((option) =>
               option.setName('user').setDescription('user to wipe the data for').setRequired(true),
             ),
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName('role-options')
+            .setDescription('[ADMIN] - configure settings for the verify package')
+            .addStringOption((option) =>
+              option
+                .setName('role-type')
+                .setDescription('the role to specify for this server')
+                .addChoice('admin-role', 'admin')
+                .addChoice('verified-role', 'verified')
+                .setRequired(true),
+            )
+            .addRoleOption((option) =>
+              option.setName('role').setDescription('the role to assing to this setting').setRequired(true),
+            ),
         ),
       async (interaction) => {
         const command = interaction.options.getSubcommand();
 
-        let userID: ObjectID;
+        let userID: ObjectId;
+        let guildID: ObjectId;
         let collection: Collection;
         let student: Student;
+        let config: GuildConfig;
 
-        // Check subcommand type
-        switch (command) {
-          case 'request':
-            await interaction.deferReply();
-            userID = ObjectID.createFromHexString(interaction.user.id.padEnd(24, '0').slice(0, 24));
-            const watID = interaction.options
-              .getString('watid', true)
-              .toLowerCase()
-              .replace(/[^a-z0-9.]/g, '');
+        await interaction.deferReply();
 
-            await this.client.connect();
-            collection = this.client.db('UWVerify').collection('students');
-            student = (await collection.findOne({ _id: userID })) as Student;
+        if (interaction.guild) {
+          switch (command) {
+            // Request
+            // Lets users request a verification token
 
-            if (student) {
-              // UUID exists in db
-              if (student.verified == true) {
-                const role = interaction.guild?.roles.cache.find((n) => n.name == 'UW');
-                if (role) {
-                  // UW Role Exists
-                  (interaction.member?.roles as GuildMemberRoleManager).add(role);
-                  interaction.editReply('Verified! 🚀');
-                } else {
-                  // TODO: Role customization
-                  interaction.editReply('Bot not configured correctly, need UW role!');
-                }
-              } else if (student.watID == watID) {
-                // Verification alrready sent for this WatIAM
-                interaction.editReply('Check your email, I sent you a verification token');
-              } else {
-                // Changed WatIAM
-                const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                await collection.updateOne(
-                  { _id: userID },
-                  { $set: { watID: watID, emails: [watID + '@uwaterloo.ca'], token: token } },
-                );
-                student = (await collection.findOne({ _id: userID })) as Student;
-                interaction.editReply('Updated WatID');
+            case 'request':
+              userID = ObjectId.createFromHexString(interaction.user.id.padEnd(24, '0').slice(0, 24));
+              const watID = interaction.options
+                .getString('watid', true)
+                .toLowerCase()
+                .replace(/[^a-z0-9.]/g, '');
 
-                this.sendVerificationEmail(interaction, email.address, student.emails[0], token);
-              }
-            } else {
-              // New UUID
-              student = (await collection.findOne({ watID: watID, verified: true })) as Student;
+              await this.client.connect();
+              collection = this.client.db('UWVerify').collection('students');
+              student = (await collection.findOne({ _id: userID })) as Student;
 
               if (student) {
-                // WatIAM already claimed
-                interaction.editReply('That WatID is already taken. Please try again.');
-              } else {
-                // WatIAM not claimed, set up verification
-                const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                if (student.verified == true) {
+                  collection = this.client.db('UWVerify').collection('guildConfigs');
+                  guildID = ObjectId.createFromHexString(interaction.guild.id.padEnd(24, '0').slice(0, 24));
+                  config = (await collection.findOne({ _id: guildID })) as GuildConfig;
 
-                student = {
-                  _id: userID,
-                  watID: watID,
-                  emails: [watID + '@uwaterloo.ca'],
-                  verified: false,
-                  verifiedBy: '',
-                  token: token,
-                };
+                  if (config) {
+                    const verifiedRole = interaction.guild?.roles.resolve(config.verifiedRole);
+                    if (verifiedRole) {
+                      (interaction.member?.roles as GuildMemberRoleManager).add(verifiedRole.id);
+                      interaction.editReply('Verified! 🚀');
+                    } else {
+                      interaction.editReply("❗️ Couldn't find role, configure the verified role in options!");
+                    }
+                  } else {
+                    interaction.editReply("❗️ Couldn't find role, configure the verified role in options");
+                  }
+                } else if (student.watID == watID) {
+                  interaction.editReply('Check your email, I sent you a verification token');
+                } else {
+                  const token =
+                    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                  await collection.updateOne(
+                    { _id: userID },
+                    { $set: { watID: watID, emails: [watID + '@uwaterloo.ca'], token: token } },
+                  );
+                  student = (await collection.findOne({ _id: userID })) as Student;
+                  interaction.editReply('Updated WatID');
 
-                await collection.insertOne(student);
-                this.sendVerificationEmail(interaction, email.address, student.emails[0], token);
-              }
-            }
-
-            await this.client.close();
-            break;
-
-          case 'confirm':
-            userID = ObjectID.createFromHexString(interaction.user.id.padEnd(24, '0').slice(0, 24));
-
-            await this.client.connect();
-            collection = this.client.db('UWVerify').collection('students');
-            student = (await collection.findOne({ _id: userID })) as Student;
-
-            if (student) {
-              // UUID exists
-              if (student.token == interaction.options.getString('token', true)) {
-                // Token matches
-                await collection.updateOne({ _id: userID }, { $set: { verified: true, verifiedBy: "token" } });
-
-                const role = interaction.guild?.roles.cache.find(n => n.name == "UW");
-                if (role) {
-                  (interaction.member?.roles as GuildMemberRoleManager).add(role)
-                  interaction.reply('Verified! 🚀');
+                  this.sendVerificationEmail(interaction, email.address, student.emails[0], token);
                 }
-                else {
-                  // TODO: Role customization
-                  interaction.editReply('Bot not configured correctly, need UW role!')
+              } else {
+                student = (await collection.findOne({ watID: watID, verified: true })) as Student;
+
+                if (student) {
+                  interaction.editReply('❗️ That WatID is already taken. Please try again.');
+                } else {
+                  student = StudentObject(userID, watID);
+                  await collection.insertOne(student);
+                  this.sendVerificationEmail(interaction, email.address, student.emails[0], student.token);
                 }
               }
-              else {
-                interaction.reply('Invalid token!');
-              }
-            } else {
-              // UUID not in db
-              interaction.reply("Couldn't find your information, did you already run `/verify request [wat-id]`?");
-            }
-
-            await this.client.close();
-            break;
-
-          case 'wipe':
-            userID = ObjectID.createFromHexString(
-              interaction.options.getUser('user', true).id.padEnd(24, '0').slice(0, 24),
-            );
-
-            if ((interaction.member?.permissions as Permissions).has(Permissions.FLAGS.ADMINISTRATOR)) {
-              // Admin access
-              // TODO: Customizable roles
-              await this.client.connect();
-              const collection = this.client.db('UWVerify').collection('students');
-              await collection.deleteOne({ _id: userID });
               await this.client.close();
+              break;
 
-              interaction.reply('Wiped! 💥');
-            } else {
-              interaction.reply(
-                "You don't have permission to do that! You can ask an admin to help with that if you'd like",
-              );
-            }
-            break;
+            // Confirm
+            // Validates the token and updates the student's verified status & role
 
-          case 'force':
-            userID = ObjectID.createFromHexString(
-              interaction.options.getUser('user', true).id.padEnd(24, '0').slice(0, 24),
-            );
+            case 'confirm':
+              userID = ObjectId.createFromHexString(interaction.user.id.padEnd(24, '0').slice(0, 24));
 
-            if ((interaction.member?.permissions as Permissions).has(Permissions.FLAGS.ADMINISTRATOR)) {
-              // Admin access
               await this.client.connect();
-              const collection = this.client.db('UWVerify').collection('students');
+              collection = this.client.db('UWVerify').collection('students');
+              student = (await collection.findOne({ _id: userID })) as Student;
 
-              const student = {
-                _id: userID,
-                watID: 'unknown',
-                emails: ['unknown' + '@uwaterloo.ca'],
-                verified: true,
-                verifiedBy: 'forced',
-                token: '',
-              };
+              if (student) {
+                if (student.token == interaction.options.getString('token', true)) {
+                  await collection.updateOne({ _id: userID }, { $set: { verified: true, verifiedBy: 'token' } });
+                  collection = this.client.db('UWVerify').collection('guildConfigs');
+                  guildID = ObjectId.createFromHexString(interaction.guild.id.padEnd(24, '0').slice(0, 24));
+                  config = (await collection.findOne({ _id: guildID })) as GuildConfig;
 
-              collection.updateOne({ _id: userID }, student, { upsert: true });
-              await this.client.close();
-
-              const role = interaction.guild?.roles.cache.find((n) => n.name == 'UW');
-              if (role) {
-                (interaction.options.getMember('user', true).roles as GuildMemberRoleManager).add(role);
+                  if (config) {
+                    const verifiedRole = interaction.guild?.roles.resolve(config.verifiedRole);
+                    if (verifiedRole) {
+                      (interaction.member?.roles as GuildMemberRoleManager).add(verifiedRole.id);
+                      interaction.editReply('Verified! 🚀');
+                    } else {
+                      interaction.editReply("❗️ Couldn't find role, configure the verified role in options!");
+                    }
+                  } else {
+                    interaction.editReply("❗️ Couldn't find role, configure the roles in options!");
+                  }
+                } else {
+                  interaction.editReply('❗️ Invalid token');
+                }
               } else {
-                // TODO: Role customization
-                interaction.editReply('Bot not configured correctly, need UW role!');
+                interaction.editReply(
+                  "❗️ Couldn't find your information, did you already run `/verify request [wat-id]`?",
+                );
               }
 
-              interaction.reply('Verified! 🚀');
-            } else {
-              interaction.reply(
-                "You don't have permission to do that! You can ask an admin to help with that if you'd like",
-              );
-            }
+              await this.client.close();
+              break;
 
-            break;
+            // Force
+            // Allows admins to force verify a user
+
+            case 'force':
+              await this.client.connect();
+              collection = this.client.db('UWVerify').collection('guildConfigs');
+              guildID = ObjectId.createFromHexString(interaction.guild.id.padEnd(24, '0').slice(0, 24));
+              config = (await collection.findOne({ _id: guildID })) as GuildConfig;
+
+              userID = ObjectId.createFromHexString(
+                interaction.options.getUser('user', true).id.padEnd(24, '0').slice(0, 24),
+              );
+
+              if (config) {
+                if (
+                  (interaction.member?.roles as GuildMemberRoleManager).resolve(config.adminRole) ||
+                  (interaction.member?.permissions as Permissions).has(Permissions.FLAGS.ADMINISTRATOR)
+                ) {
+                  const verifiedRole = interaction.guild?.roles.resolve(config.verifiedRole);
+                  if (verifiedRole) {
+                    (
+                      interaction.guild?.members?.resolve(interaction.options.getUser('user', true))
+                        ?.roles as GuildMemberRoleManager
+                    ).add(verifiedRole);
+                    interaction.editReply('Verified! 🚀');
+                  } else {
+                    interaction.editReply("❗️ Couldn't find role, configure this in options!");
+                  }
+                } else {
+                  interaction.editReply(
+                    "❗️ You don't have permission to do that! You can ask an admin to help with that if you'd like",
+                  );
+                }
+              } else {
+                interaction.editReply("❗️ Couldn't find role, configure the admin role in options!");
+              }
+              await this.client.close();
+              break;
+
+            // Wipe
+            // Lets admins wipe users' data from the database
+
+            case 'wipe':
+              await this.client.connect();
+              collection = this.client.db('UWVerify').collection('guildConfigs');
+              guildID = ObjectId.createFromHexString(interaction.guild.id.padEnd(24, '0').slice(0, 24));
+              config = (await collection.findOne({ _id: guildID })) as GuildConfig;
+              userID = ObjectId.createFromHexString(
+                interaction.options.getUser('user', true).id.padEnd(24, '0').slice(0, 24),
+              );
+
+              if (config) {
+                if (
+                  (interaction.member?.roles as GuildMemberRoleManager).resolve(config.adminRole) ||
+                  (interaction.member?.permissions as Permissions).has(Permissions.FLAGS.ADMINISTRATOR)
+                ) {
+                  collection = this.client.db('UWVerify').collection('students');
+                  await collection.deleteOne({ _id: userID });
+                  interaction.editReply('Wiped! 💥');
+                } else {
+                  interaction.editReply(
+                    "❗️ You don't have permission to do that! You can ask an admin to help with that if you'd like",
+                  );
+                }
+              } else {
+                interaction.editReply("❗️ Couldn't find role, configure the admin role in options!");
+              }
+              await this.client.close();
+              break;
+
+            // Role Options
+            // Allows guild admins to configure custom roles to be used for their guild
+
+            case 'role-options':
+              if ((interaction.member?.permissions as Permissions).has(Permissions.FLAGS.ADMINISTRATOR)) {
+                await this.client.connect();
+                collection = this.client.db('UWVerify').collection('guildConfigs');
+                const guildID = ObjectId.createFromHexString(interaction.guild.id.padEnd(24, '0').slice(0, 24));
+
+                switch (interaction.options.getString('role-type', true)) {
+                  case 'admin':
+                    await collection.updateOne(
+                      { _id: guildID },
+                      { $set: { adminRole: interaction.options.getRole('role', true).id } },
+                      { upsert: true },
+                    );
+
+                    interaction.editReply('⚙️ Updated admin role');
+                    break;
+
+                  case 'verified':
+                    await collection.updateOne(
+                      { _id: guildID },
+                      { $set: { verifiedRole: interaction.options.getRole('role', true).id } },
+                      { upsert: true },
+                    );
+                    interaction.editReply('⚙️ Updated verified role');
+                    break;
+                }
+                await this.client.close();
+              } else {
+                interaction.editReply(
+                  "❗️ You don't have permission to do that! You can ask an admin to help with that if you'd like",
+                );
+              }
+              break;
+          }
         }
       },
     ),
   ];
-};
+}
