@@ -126,7 +126,7 @@ export default class UWVerify implements CommandPack {
                 .setRequired(true),
             )
             .addRoleOption((option) =>
-              option.setName('role').setDescription('the role to assing to this setting').setRequired(true),
+              option.setName('role').setDescription('the role to assign to this setting').setRequired(true),
             ),
         ),
       async (interaction) => {
